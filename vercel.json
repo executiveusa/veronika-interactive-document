@@ -1,0 +1,8 @@
+{
+  "cleanUrls": true,
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/social-presence-builder", "destination": "/asc3nd-90-day-social-presence-builder-updated.html" },
+    { "source": "/funding-alignment", "destination": "/nwkids_funding_alignment_call_tracker_v2.html" }
+  ]
+}
