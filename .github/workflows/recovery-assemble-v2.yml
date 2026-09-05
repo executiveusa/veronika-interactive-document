@@ -1,0 +1,34 @@
+name: Veronika Recovery Assemble V2
+on:
+  push:
+    branches: [deploy-veronika-recovery]
+    paths: [.github/workflows/recovery-assemble-v2.yml]
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: deploy-veronika-recovery
+      - name: Correct Git blob verifier
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('recovery/reconstruct.py')
+          lines = p.read_text().splitlines()
+          for i, line in enumerate(lines):
+              if line.startswith('git_blob = '):
+                  lines[i] = 'git_blob = hashlib.sha1(f"blob {len(data)}".encode() + b"\\0" + data).hexdigest()'
+          p.write_text('\n'.join(lines) + '\n')
+          PY
+      - name: Reconstruct and verify exact reduced HTML
+        run: python recovery/reconstruct.py
+      - name: Commit verified index only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "recovery: assemble verified reduced Veronika HTML"
+          git push origin HEAD:deploy-veronika-recovery
