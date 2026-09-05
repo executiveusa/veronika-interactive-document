@@ -1,0 +1,23 @@
+name: Veronika Recovery Assemble
+on:
+  push:
+    branches: [deploy-veronika-recovery]
+    paths: [.github/workflows/recovery-assemble.yml]
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: deploy-veronika-recovery
+      - name: Reconstruct and verify exact reduced HTML
+        run: python recovery/reconstruct.py
+      - name: Commit verified index only
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "recovery: assemble verified reduced Veronika HTML"
+          git push origin HEAD:deploy-veronika-recovery
