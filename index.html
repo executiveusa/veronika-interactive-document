@@ -11,8 +11,1147 @@
 <link href="data:image/svg+xml,&lt;svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'&gt;&lt;text y='.9em' font-size='90'&gt;✦&lt;/text&gt;&lt;/svg&gt;" rel="icon"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&amp;family=Newsreader:ital,opsz,wght@0,6..72,300;0,6..72,400;1,6..72,300;1,6..72,400&amp;family=IBM+Plex+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400;1,500&amp;family=Newsreader:ital,opsz,wght@0,6.72,300;0,6.72,400;1,6.72,300;1,6.72,400&amp;family=IBM+Plex+Sans:wght@300;400;500;600&amp;display=swap" rel="stylesheet"/>
 
+<style>
+/* ════════════════════════════════════════════════════
+   RESET + TOKENS
+════════════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --ink:#1a1916;       --ink2:#3d3b36;      --muted:#888580;
+  --cream:#faf8f3;     --cream2:#f2efe8;    --cream3:#e8e4da;
+  --border:#dddad2;    --border2:#c8c4b8;
+  --gold:#b8922a;      --gold2:#d4aa4a;     --gold-light:#fdf5e0;
+  --dark:#151410;      --dark2:#1e1c18;     --dark3:#282520;
+  --white:#fefefe;
+  --navy:#1a2035;      --navy2:#232b45;
+  --serif:'Cormorant Garamond',Georgia,serif;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;
+  --news:'Newsreader',Georgia,serif;
+  --transition:0.5s cubic-bezier(0.25,0.46,0.45,0.94);
+}
+html{scroll-behavior:smooth;overflow-x:hidden;}
+body{
+  background:var(--cream);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:16px;
+  line-height:1.7;
+  overflow-x:hidden;
+}
+
+/* ════════════════════════════════════════════════════
+   TYPOGRAPHY
+════════════════════════════════════════════════════ */
+h1,h2,h3,h4{font-family:var(--serif);font-weight:400;line-height:1.1;letter-spacing:-0.01em;}
+.display{font-family:var(--serif);font-weight:300;letter-spacing:-0.02em;line-height:0.95;}
+blockquote{font-family:var(--news);font-style:italic;font-size:1.2em;color:var(--ink2);}
+.eyebrow{font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:500;font-family:var(--sans);}
+.body-text{font-size:17px;line-height:1.8;color:var(--ink2);max-width:720px;}
+.body-text p{margin-bottom:1.4em;}
+.body-text p:last-child{margin-bottom:0;}
+
+/* ════════════════════════════════════════════════════
+   TOP NAV
+════════════════════════════════════════════════════ */
+.topnav{
+  position:fixed;top:0;left:0;right:0;z-index:200;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 28px;
+  background:transparent;
+  transition:background 0.4s ease, box-shadow 0.4s ease;
+}
+.topnav.scrolled{
+  background:rgba(250,248,243,0.96);
+  backdrop-filter:blur(12px);
+  box-shadow:0 1px 0 var(--border);
+}
+.nav-logo{height:28px;width:auto;opacity:0.9;}
+.nav-right{display:flex;align-items:center;gap:12px;}
+.toc-btn{
+  border:0.5px solid rgba(255,255,255,0.3);
+  background:rgba(255,255,255,0.1);
+  color:#fff;
+  padding:7px 16px;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:500;
+  cursor:pointer;
+  font-family:var(--sans);
+  letter-spacing:0.05em;
+  transition:all 0.2s;
+  backdrop-filter:blur(8px);
+}
+.topnav.scrolled .toc-btn{
+  border-color:var(--border);
+  background:var(--cream2);
+  color:var(--ink);
+}
+.toc-btn:hover{background:rgba(255,255,255,0.25);}
+.topnav.scrolled .toc-btn:hover{background:var(--cream3);}
+
+/* ════════════════════════════════════════════════════
+   PROGRESS BAR
+════════════════════════════════════════════════════ */
+#progress-bar{
+  position:fixed;top:0;left:0;height:2px;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  z-index:201;
+  width:0;transition:width 0.3s ease;
+}
+
+/* ════════════════════════════════════════════════════
+   TABLE OF CONTENTS DRAWER
+════════════════════════════════════════════════════ */
+.toc-overlay{
+  position:fixed;inset:0;z-index:300;
+  background:rgba(21,20,16,0.7);
+  opacity:0;pointer-events:none;
+  transition:opacity 0.35s ease;
+  backdrop-filter:blur(4px);
+}
+.toc-overlay.open{opacity:1;pointer-events:auto;}
+.toc-drawer{
+  position:absolute;right:0;top:0;bottom:0;
+  width:min(380px,90vw);
+  background:var(--dark);
+  color:#f0ede6;
+  padding:40px 32px;
+  transform:translateX(100%);
+  transition:transform 0.4s cubic-bezier(0.25,0.46,0.45,0.94);
+  overflow-y:auto;
+}
+.toc-overlay.open .toc-drawer{transform:translateX(0);}
+.toc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:36px;}
+.toc-header h3{font-family:var(--serif);font-size:22px;font-weight:400;color:#f0ede6;}
+.toc-close{background:none;border:none;color:#888;font-size:22px;cursor:pointer;padding:4px 8px;transition:color 0.2s;}
+.toc-close:hover{color:#f0ede6;}
+.toc-prepared{
+  display:flex;align-items:center;gap:12px;
+  background:rgba(255,255,255,0.06);
+  border:0.5px solid rgba(255,255,255,0.12);
+  border-radius:10px;padding:12px 14px;margin-bottom:32px;
+}
+.toc-prepared img{height:28px;width:auto;}
+.toc-prepared-text{font-size:11px;color:#a9ac9f;line-height:1.5;}
+.toc-prepared-text strong{color:#d8d4cc;display:block;font-size:12px;}
+.toc-list{list-style:none;}
+.toc-item{margin-bottom:4px;}
+.toc-link{
+  display:flex;align-items:center;gap:14px;
+  padding:10px 14px;border-radius:8px;
+  text-decoration:none;color:#c4c0b6;
+  font-size:14px;transition:all 0.2s;
+  border:0.5px solid transparent;
+}
+.toc-link:hover{background:rgba(255,255,255,0.06);color:#f0ede6;border-color:rgba(255,255,255,0.1);}
+.toc-link.active{background:rgba(184,146,42,0.15);color:var(--gold2);border-color:rgba(184,146,42,0.3);}
+.toc-num{
+  width:26px;height:26px;border-radius:50%;
+  background:rgba(255,255,255,0.08);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:600;flex-shrink:0;
+  color:#888;font-family:var(--sans);
+}
+.toc-link.active .toc-num{background:var(--gold);color:var(--dark);}
+.toc-link.visited .toc-num{background:rgba(255,255,255,0.15);color:#c4c0b6;}
+.toc-title{flex:1;line-height:1.3;}
+.toc-chapter-label{font-size:10px;color:#666;display:block;letter-spacing:0.08em;text-transform:uppercase;}
+.toc-divider{height:0.5px;background:rgba(255,255,255,0.08);margin:16px 0;}
+.toc-footer{margin-top:28px;font-size:12px;color:#666;text-align:center;}
+
+/* ════════════════════════════════════════════════════
+   HERO — FULL VIEWPORT
+════════════════════════════════════════════════════ */
+.hero{
+  min-height:100vh;
+  background:var(--dark);
+  display:flex;flex-direction:column;
+  justify-content:center;align-items:center;
+  text-align:center;
+  padding:80px 24px 60px;
+  position:relative;
+  overflow:hidden;
+}
+.hero::before{
+  content:'';position:absolute;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events:none;opacity:0.6;
+}
+.hero::after{
+  content:'';position:absolute;
+  top:0;left:50%;transform:translateX(-50%);
+  width:1px;height:80px;
+  background:linear-gradient(to bottom,transparent,var(--gold),transparent);
+}
+.hero-content{position:relative;z-index:2;max-width:760px;}
+.hero-eyebrow{
+  font-size:11px;letter-spacing:0.28em;text-transform:uppercase;
+  color:var(--gold);font-weight:500;margin-bottom:28px;
+  opacity:0;animation:fadeUp 1s 0.3s ease both;
+}
+.hero-name{
+  font-family:var(--serif);font-weight:300;
+  font-size:clamp(52px,10vw,100px);
+  line-height:0.92;
+  color:#f8f5ec;
+  letter-spacing:-0.03em;
+  margin-bottom:10px;
+  opacity:0;animation:fadeUp 1s 0.55s ease both;
+}
+.hero-tagline{
+  font-family:var(--news);
+  font-size:clamp(18px,4vw,28px);
+  font-style:italic;
+  color:#c4c0b6;
+  margin-bottom:32px;
+  opacity:0;animation:fadeUp 1s 0.75s ease both;
+}
+.hero-cta{
+  margin-top:32px;
+  opacity:0;animation:fadeUp 1s 1s ease both;
+}
+.hero-cta a{
+  display:inline-block;
+  padding:12px 32px;
+  border:0.5px solid var(--gold);
+  color:var(--gold);
+  text-decoration:none;
+  font-size:12px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  transition:all 0.3s;
+}
+.hero-cta a:hover{
+  background:var(--gold);
+  color:var(--dark);
+}
+
+@keyframes fadeUp{
+  from{opacity:0;transform:translateY(20px);}
+  to{opacity:1;transform:translateY(0);}
+}
+
+/* ════════════════════════════════════════════════════
+   CONTENT SECTIONS
+════════════════════════════════════════════════════ */
+section{padding:80px 40px;}
+section.wide{padding:100px 60px;}
+@media (max-width:768px){
+  section{padding:60px 24px;}
+  section.wide{padding:80px 24px;}
+}
+
+section h2{
+  font-size:clamp(32px,6vw,56px);
+  margin-bottom:20px;
+  color:var(--ink);
+}
+
+section .section-tag{
+  display:inline-block;
+  font-size:11px;
+  letter-spacing:0.2em;
+  text-transform:uppercase;
+  color:var(--gold);
+  margin-bottom:16px;
+  font-weight:500;
+}
+
+/* ════════════════════════════════════════════════════
+   Q&A SECTION — PART ONE
+════════════════════════════════════════════════════ */
+.qa-section{
+  background:var(--cream2);
+}
+
+.qa-intro{
+  max-width:720px;
+  margin:0 auto 48px;
+  text-align:center;
+}
+
+.qa-intro p{
+  font-size:18px;
+  color:var(--ink2);
+  line-height:1.8;
+}
+
+.qa-grid{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:40px;
+  max-width:800px;
+  margin:0 auto;
+}
+
+.qa-item{
+  border-bottom:1px solid var(--border);
+  padding-bottom:32px;
+}
+
+.qa-item:last-child{border-bottom:none;}
+
+.qa-question{
+  font-family:var(--serif);
+  font-size:20px;
+  font-weight:400;
+  color:var(--ink);
+  margin-bottom:16px;
+  display:flex;align-items:flex-start;
+  gap:12px;
+}
+
+.qa-question::before{
+  content:'Q';
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:32px;
+  height:32px;
+  border:1px solid var(--gold);
+  border-radius:50%;
+  flex-shrink:0;
+  font-weight:600;
+  color:var(--gold);
+  font-family:var(--serif);
+  font-size:14px;
+}
+
+.qa-input{
+  width:100%;
+  padding:16px;
+  border:0.5px solid var(--border2);
+  background:var(--white);
+  font-family:var(--sans);
+  font-size:15px;
+  color:var(--ink);
+  border-radius:4px;
+  line-height:1.6;
+  min-height:140px;
+  resize:vertical;
+  transition:border-color 0.2s, box-shadow 0.2s;
+}
+
+.qa-input:focus{
+  outline:none;
+  border-color:var(--gold);
+  box-shadow:0 0 0 2px rgba(184,146,42,0.1);
+}
+
+.qa-answer{
+  font-family:var(--news);
+  font-size:17px;
+  line-height:1.85;
+  color:var(--ink2);
+  padding:20px 24px;
+  background:var(--white);
+  border-left:2px solid var(--gold);
+  border-radius:0 4px 4px 0;
+}
+
+/* ════════════════════════════════════════════════════
+   CHAPTER BLOCKS
+════════════════════════════════════════════════════ */
+.chapter-block{
+  max-width:720px;
+  margin:0 auto;
+}
+
+.chapter-block h3{
+  font-size:28px;
+  margin-bottom:32px;
+  color:var(--ink);
+}
+
+.chapter-block .body-text{
+  font-size:17px;
+  color:var(--ink2);
+}
+
+
+/* ════════════════════════════════════════════════════
+   RECENT PROJECTS & PROPOSALS
+════════════════════════════════════════════════════ */
+.recent-projects-section{
+  background:var(--cream2);
+}
+.recent-projects-shell{
+  max-width:1080px;
+  margin:0 auto;
+}
+.recent-projects-header{
+  max-width:720px;
+  margin:0 auto 48px;
+  text-align:center;
+}
+.recent-projects-header p{
+  font-size:16px;
+  color:var(--ink2);
+  line-height:1.8;
+}
+
+.living-documents-explainer{
+  max-width:900px;
+  margin:0 auto 38px;
+  border:0.5px solid rgba(184,146,42,0.38);
+  border-radius:12px;
+  background:linear-gradient(135deg,rgba(255,255,255,0.86),rgba(253,245,224,0.72));
+  padding:26px 30px;
+  box-shadow:0 16px 42px rgba(21,20,16,0.06);
+}
+.living-documents-explainer h3{
+  font-size:30px;
+  margin-bottom:10px;
+  color:var(--ink);
+}
+.living-documents-explainer p{
+  font-size:15px;
+  color:var(--ink2);
+  line-height:1.8;
+  margin-bottom:18px;
+}
+.living-documents-pills{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.living-documents-pills span{
+  font-size:10px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--ink2);
+  border:0.5px solid var(--border2);
+  background:rgba(255,255,255,0.74);
+  border-radius:20px;
+  padding:6px 10px;
+}
+@media (max-width:768px){
+  .living-documents-explainer{padding:22px 20px;}
+  .living-documents-explainer h3{font-size:25px;}
+}
+
+.recent-projects-grid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:28px;
+}
+@media (max-width:860px){
+  .recent-projects-grid{grid-template-columns:1fr;}
+}
+.project-card{
+  background:var(--white);
+  border:0.5px solid var(--border2);
+  border-radius:10px;
+  overflow:hidden;
+  box-shadow:0 18px 50px rgba(21,20,16,0.08);
+  transition:transform 0.35s ease, box-shadow 0.35s ease, border-color 0.35s ease;
+}
+.project-card:hover{
+  transform:translateY(-4px);
+  border-color:rgba(184,146,42,0.55);
+  box-shadow:0 24px 70px rgba(21,20,16,0.13);
+}
+.project-card.featured-card{
+  grid-column:1/-1;
+}
+.project-snapshot{
+  min-height:330px;
+  position:relative;
+  background:
+    radial-gradient(circle at 20% 10%, rgba(212,170,74,0.22), transparent 32%),
+    linear-gradient(135deg,#1b1a16 0%,#2d2a23 48%,#f0ede6 48%,#f8f5ec 100%);
+  background-size:cover;
+  background-position:center top;
+  overflow:hidden;
+}
+.project-card.featured-card .project-snapshot{min-height:420px;}
+.project-snapshot-link{position:absolute;inset:0;z-index:4;text-indent:-9999px;overflow:hidden;}
+.project-snapshot-link:focus-visible{outline:2px solid var(--gold);outline-offset:-4px;}
+.project-snapshot-content{position:relative;z-index:1;}
+.project-card[data-project-card="project-3-living-documents"] .project-snapshot{background-position:center top;background-size:cover;}
+@media (max-width:768px){
+  .project-snapshot,
+  .project-card.featured-card .project-snapshot{min-height:260px;}
+}
+
+.project-snapshot.living-document-static{
+  background:
+    radial-gradient(circle at 18% 18%, rgba(184,146,42,0.26), transparent 28%),
+    radial-gradient(circle at 82% 22%, rgba(26,32,53,0.18), transparent 30%),
+    linear-gradient(145deg,#151410 0%,#282520 38%,#f8f5ec 38%,#f8f5ec 100%);
+}
+.project-snapshot.living-document-static::after{
+  content:'';
+  position:absolute;
+  inset:34px 0 0 0;
+  background:
+    linear-gradient(90deg,rgba(255,255,255,0.04) 0 1px,transparent 1px 100%),
+    linear-gradient(180deg,rgba(255,255,255,0.04) 0 1px,transparent 1px 100%);
+  background-size:36px 36px;
+  pointer-events:none;
+  opacity:0.25;
+}
+.living-doc-snapshot-card{
+  position:absolute;
+  left:34px;right:34px;bottom:34px;top:66px;
+  z-index:1;
+  display:grid;
+  grid-template-columns:1.05fr 0.95fr;
+  gap:18px;
+  align-items:stretch;
+}
+.living-doc-panel{
+  border:0.5px solid rgba(255,255,255,0.18);
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(8px);
+  border-radius:10px;
+  padding:20px;
+  color:#f8f5ec;
+  box-shadow:0 18px 60px rgba(0,0,0,0.18);
+}
+.living-doc-panel.light{
+  background:rgba(250,248,243,0.92);
+  color:var(--ink);
+}
+.living-doc-panel .mini-label{
+  display:block;
+  font-size:10px;
+  letter-spacing:0.16em;
+  text-transform:uppercase;
+  color:var(--gold2);
+  margin-bottom:12px;
+}
+.living-doc-panel strong{
+  display:block;
+  font-family:var(--serif);
+  font-weight:400;
+  font-size:28px;
+  line-height:1.02;
+  margin-bottom:14px;
+}
+.living-doc-panel p{
+  font-size:13px;
+  line-height:1.65;
+  color:inherit;
+  opacity:0.82;
+}
+.living-doc-lines{
+  display:grid;
+  gap:8px;
+  margin-top:18px;
+}
+.living-doc-lines span{
+  display:block;
+  height:8px;
+  border-radius:8px;
+  background:rgba(184,146,42,0.2);
+}
+.living-doc-lines span:nth-child(2){width:78%;}
+.living-doc-lines span:nth-child(3){width:56%;}
+@media (max-width:768px){
+  .living-doc-snapshot-card{left:18px;right:18px;bottom:18px;top:58px;grid-template-columns:1fr;}
+  .living-doc-panel:nth-child(2){display:none;}
+  .living-doc-panel strong{font-size:24px;}
+}
+
+.project-snapshot.has-image::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:linear-gradient(to bottom,rgba(0,0,0,0.02),rgba(0,0,0,0.08));
+  pointer-events:none;
+}
+.browser-bar{
+  position:absolute;
+  top:0;left:0;right:0;
+  height:34px;
+  background:rgba(250,248,243,0.94);
+  border-bottom:0.5px solid rgba(21,20,16,0.12);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:0 12px;
+  z-index:2;
+  backdrop-filter:blur(10px);
+}
+.browser-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:rgba(21,20,16,0.2);
+}
+.browser-url{
+  margin-left:8px;
+  height:17px;
+  flex:1;
+  border-radius:12px;
+  background:rgba(21,20,16,0.07);
+  color:rgba(21,20,16,0.38);
+  font-size:10px;
+  display:flex;
+  align-items:center;
+  padding:0 10px;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.project-placeholder-copy{
+  position:absolute;
+  inset:34px 0 0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:36px;
+  color:#f8f5ec;
+  z-index:1;
+}
+.project-snapshot.has-image .project-placeholder-copy{display:none;}
+.project-placeholder-copy span{
+  font-size:11px;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--gold2);
+  margin-bottom:10px;
+}
+.project-placeholder-copy strong{
+  font-family:var(--serif);
+  font-size:clamp(28px,5vw,50px);
+  font-weight:300;
+  line-height:1;
+}
+.project-card-body{
+  padding:24px 26px 26px;
+}
+.project-card-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:10px;
+}
+.project-kicker{
+  font-size:10px;
+  letter-spacing:0.18em;
+  text-transform:uppercase;
+  color:var(--gold);
+  font-weight:600;
+}
+.project-link{
+  font-size:12px;
+  color:var(--muted);
+  text-decoration:none;
+  border-bottom:0.5px solid transparent;
+  max-width:46%;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+}
+.project-link[href]:hover{
+  color:var(--gold);
+  border-bottom-color:rgba(184,146,42,0.35);
+}
+.project-title-edit{
+  font-size:24px;
+  color:var(--ink);
+  margin-bottom:12px;
+}
+.project-description-edit{
+  font-size:14px;
+  color:var(--ink2);
+  line-height:1.75;
+  min-height:74px;
+}
+.project-title-edit[contenteditable="true"],
+.project-description-edit[contenteditable="true"]{
+  border-radius:4px;
+  outline:none;
+  transition:box-shadow 0.2s ease, background 0.2s ease;
+}
+.project-title-edit[contenteditable="true"]:focus,
+.project-description-edit[contenteditable="true"]:focus{
+  background:var(--gold-light);
+  box-shadow:0 0 0 4px var(--gold-light);
+}
+.project-edit-panel{
+  margin-top:18px;
+  border-top:0.5px solid var(--border);
+  padding-top:14px;
+}
+.project-edit-panel summary{
+  cursor:pointer;
+  font-size:11px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  user-select:none;
+}
+.project-edit-fields{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:12px;
+  margin-top:14px;
+}
+.project-edit-fields label{
+  display:grid;
+  gap:6px;
+  font-size:10px;
+  letter-spacing:0.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.project-edit-fields input{
+  width:100%;
+  border:0.5px solid var(--border2);
+  background:var(--cream);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:13px;
+  padding:10px 12px;
+  border-radius:4px;
+}
+.project-edit-fields input:focus{
+  outline:none;
+  border-color:var(--gold);
+  box-shadow:0 0 0 2px rgba(184,146,42,0.12);
+}
+.project-help-text{
+  font-size:12px;
+  color:var(--muted);
+  margin-top:16px;
+  line-height:1.6;
+}
+
+/* ════════════════════════════════════════════════════
+   RESPONSE SECTION
+════════════════════════════════════════════════════ */
+.response-section{
+  background:var(--dark);
+  color:#f0ede6;
+  padding:100px 60px;
+}
+
+@media (max-width:768px){
+  .response-section{padding:80px 24px;}
+}
+
+.response-section h2{
+  color:#f0ede6;
+}
+
+.response-container{
+  max-width:800px;
+  margin:0 auto;
+}
+
+.response-meta{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  margin-bottom:32px;
+  font-size:14px;
+  color:#a9ac9f;
+}
+
+.response-date{color:#d8d4cc;font-weight:500;}
+
+.form-group{
+  margin-bottom:24px;
+}
+
+.form-group label{
+  display:block;
+  margin-bottom:8px;
+  font-size:12px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  color:#a9ac9f;
+}
+
+.form-group input,
+.form-group textarea{
+  width:100%;
+  padding:12px 16px;
+  background:rgba(255,255,255,0.05);
+  border:0.5px solid rgba(255,255,255,0.15);
+  color:#f0ede6;
+  font-family:var(--sans);
+  font-size:15px;
+  border-radius:4px;
+  transition:all 0.2s;
+}
+
+.form-group input::placeholder,
+.form-group textarea::placeholder{
+  color:#666;
+}
+
+.form-group input:focus,
+.form-group textarea:focus{
+  outline:none;
+  border-color:var(--gold);
+  box-shadow:0 0 0 2px rgba(184,146,42,0.2);
+  background:rgba(255,255,255,0.08);
+}
+
+.form-group textarea{
+  resize:vertical;
+  min-height:160px;
+}
+
+.char-count{
+  display:block;
+  font-size:12px;
+  color:#888;
+  margin-top:8px;
+}
+
+.button-group{
+  display:flex;
+  gap:16px;
+  margin-top:32px;
+}
+
+.btn{
+  padding:12px 32px;
+  border:0.5px solid;
+  background:transparent;
+  color:#f0ede6;
+  cursor:pointer;
+  font-size:12px;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  font-weight:500;
+  border-radius:4px;
+  transition:all 0.3s;
+  font-family:var(--sans);
+}
+
+.btn-primary{
+  background:var(--gold);
+  color:var(--dark);
+  border-color:var(--gold);
+}
+
+.btn-primary:hover{
+  background:var(--gold2);
+  border-color:var(--gold2);
+}
+
+.btn-secondary{
+  border-color:#666;
+  color:#c4c0b6;
+}
+
+.btn-secondary:hover{
+  border-color:#a9ac9f;
+  color:#f0ede6;
+}
+
+.response-saved-msg{
+  display:none;
+  padding:12px 16px;
+  background:rgba(184,146,42,0.2);
+  border:0.5px solid var(--gold);
+  color:var(--gold2);
+  border-radius:4px;
+  font-size:13px;
+  margin-top:16px;
+  opacity:0;
+  transition:opacity 0.3s;
+}
+
+.response-saved-msg.show{
+  display:block;
+  opacity:1;
+}
+
+.response-history{
+  margin-top:48px;
+  padding-top:48px;
+  border-top:0.5px solid rgba(255,255,255,0.1);
+}
+
+.response-history h4{
+  font-size:14px;
+  color:#a9ac9f;
+  letter-spacing:0.1em;
+  text-transform:uppercase;
+  margin-bottom:24px;
+}
+
+.response-history-list{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:20px;
+}
+
+.response-entry{
+  background:rgba(255,255,255,0.04);
+  border:0.5px solid rgba(255,255,255,0.08);
+  padding:16px;
+  border-radius:4px;
+}
+
+.response-entry-meta{
+  font-size:12px;
+  color:#888;
+  margin-bottom:8px;
+}
+
+.response-entry-text{
+  font-size:14px;
+  color:#c4c0b6;
+  line-height:1.6;
+}
+
+/* ════════════════════════════════════════════════════
+   TOAST & UTILITIES
+════════════════════════════════════════════════════ */
+#toast{
+  position:fixed;
+  bottom:32px;right:32px;
+  background:rgba(0,0,0,0.9);
+  color:#f0ede6;
+  padding:14px 20px;
+  border-radius:4px;
+  font-size:13px;
+  z-index:999;
+  opacity:0;
+  transform:translateY(20px);
+  transition:all 0.3s;
+  pointer-events:none;
+}
+
+#toast.show{
+  opacity:1;
+  transform:translateY(0);
+}
+
+/* ════════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════════ */
+footer{
+  background:var(--dark2);
+  color:#888;
+  padding:40px;
+  text-align:center;
+  font-size:13px;
+  border-top:0.5px solid rgba(255,255,255,0.08);
+}
+
+footer p{margin:0;}
+
+
+/* ════════════════════════════════════════════════════
+   EMBEDDED FUNDING TRACKER
+════════════════════════════════════════════════════ */
+.funding-tracker-section{
+  background:var(--dark);
+  color:#f0ede6;
+  padding:100px 60px;
+}
+.funding-tracker-container{
+  max-width:1180px;
+  margin:0 auto;
+}
+.funding-tracker-container h2{
+  color:#f0ede6;
+}
+.funding-tracker-container .body-text{
+  color:#c4c0b6;
+  max-width:820px;
+  margin-bottom:32px;
+}
+.embedded-tracker-shell{
+  border:0.5px solid rgba(255,255,255,0.14);
+  border-radius:18px;
+  overflow:hidden;
+  background:#0f1b16;
+  box-shadow:0 24px 80px rgba(0,0,0,0.32);
+}
+.embedded-tracker-topbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  padding:14px 18px;
+  background:rgba(255,255,255,0.04);
+  border-bottom:0.5px solid rgba(255,255,255,0.12);
+}
+.embedded-tracker-topbar span{
+  font-size:12px;
+  color:#a9ac9f;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+}
+.embedded-tracker-topbar a{
+  color:var(--gold2);
+  text-decoration:none;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+}
+.embedded-tracker-frame{
+  width:100%;
+  height:1120px;
+  border:0;
+  display:block;
+  background:#0f1b16;
+}
+@media (max-width:768px){
+  .funding-tracker-section{padding:80px 24px;}
+  .embedded-tracker-frame{height:980px;}
+  .embedded-tracker-topbar{align-items:flex-start;flex-direction:column;}
+}
+
+
+.project-snapshot.jetty-static{
+  background:
+    radial-gradient(circle at 18% 18%, rgba(239,196,107,0.18), transparent 28%),
+    radial-gradient(circle at 78% 10%, rgba(255,120,168,0.13), transparent 24%),
+    linear-gradient(145deg,#0d1513 0%,#16221e 52%,#2a1f24 100%);
+}
+.project-snapshot.has-image .project-beta-note{
+  margin-top:10px;
+  padding:10px 12px;
+  border-left:2px solid var(--gold);
+  background:rgba(184,146,42,0.08);
+  color:var(--ink2);
+  font-size:14px;
+  font-style:italic;
+}
+
+
+.project-concept-resources{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+  margin-top:14px;
+}
+.project-concept-resources a{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:7px 10px;
+  border:0.5px solid var(--border2);
+  border-radius:999px;
+  color:var(--ink2);
+  background:var(--cream2);
+  text-decoration:none;
+  font-size:12px;
+}
+.project-concept-resources a:hover{
+  border-color:var(--gold);
+  color:var(--ink);
+  background:var(--gold-light);
+}
+.project-mini-gallery{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:8px;
+  margin-top:16px;
+}
+.project-mini-gallery img{
+  width:100%;
+  height:86px;
+  object-fit:cover;
+  border-radius:6px;
+  border:0.5px solid var(--border2);
+  display:block;
+}
+@media(max-width:640px){
+  .project-mini-gallery{grid-template-columns:1fr;}
+  .project-mini-gallery img{height:160px;}
+}
+
+
+.project-card[data-project-card="project-4-jetty"] .project-card[data-project-card="project-5-indigo-aquaponic-dome"] .project-snapshot-link{display:none!important;}
+.project-card[data-project-card="project-5-indigo-aquaponic-dome"] .project-link{border:0;background:transparent;padding:0;}
+
+
+.funding-collapsible{
+  margin-top:30px;
+  border:0.5px solid rgba(255,255,255,0.16);
+  border-radius:18px;
+  background:rgba(255,255,255,0.04);
+  overflow:hidden;
+}
+.funding-collapsible summary{
+  list-style:none;
+  cursor:pointer;
+  padding:22px 24px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:18px;
+  border-bottom:0.5px solid transparent;
+}
+.funding-collapsible summary::-webkit-details-marker{display:none;}
+.funding-summary-copy{
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.funding-summary-copy strong{
+  font-family:var(--serif);
+  font-size:24px;
+  font-weight:400;
+  color:#f0ede6;
+}
+.funding-summary-copy span{
+  color:#a9ac9f;
+  font-size:13px;
+  line-height:1.5;
+}
+.funding-summary-action{
+  flex-shrink:0;
+  border:0.5px solid var(--gold);
+  color:var(--gold);
+  border-radius:999px;
+  padding:9px 14px;
+  font-size:12px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+}
+.funding-collapsible[open] summary{
+  border-bottom-color:rgba(255,255,255,0.12);
+}
+.funding-collapsible[open] .funding-summary-action::before{
+  content:'Close ';
+}
+.funding-collapsible:not([open]) .funding-summary-action::before{
+  content:'Open ';
+}
+.funding-collapsible .embedded-tracker-shell{
+  border:0;
+  border-radius:0;
+  box-shadow:none;
+}
+@media(max-width:768px){
+  .funding-collapsible summary{
+    flex-direction:column;
+    align-items:flex-start;
+  }
+}
+
+
+/* Hero isolation fix: keeps project-card overlays from leaking into opening page */
+.hero{
+  isolation:isolate;
+  z-index:1;
+}
+.hero-content{
+  position:relative;
+  z-index:3;
+}
+.hero .project-snapshot,
+.hero .project-snapshot-link,
+.hero [data-project-card]{
+  display:none!important;
+}
+.project-card[data-project-card="project-4-jetty"] </style>
 </head>
 <body>
 <!-- ══════════════════════════════════════════════════════════
@@ -127,7 +1266,7 @@
 <!-- ══════════════════════════════════════════════════════════
      SECTION 1: THE FRAMEWORK
 ═══════════════════════════════════════════════════════════ -->
-<section data-chapter="" id="chapter-1">
+<section id="chapter-7" data-chapter class="recent-projects-section wide">
 <div class="chapter-block">
 <div class="section-tag">Section 7</div>
 <h2>Recent Projects &amp; Proposals</h2>
@@ -305,7 +1444,7 @@
 <div class="section-tag" style="color:var(--gold);">Section 8</div>
 <h2>Funding Alignment Outreach Board</h2>
 <div class="body-text">
-<p>We designed these outreach boards to help ourselves and other clients in the future organize their campaigns. This board maps grant, corporate, university, philanthropic, and public-sector opportunities that align with New World Kids, , AI for Good, food security, youth programs, regenerative agriculture, digital equity, and community resilience.</p>
+<p>We designed these outreach boards to help ourselves and other clients in the future organize their campaigns. This board maps grant, corporate, university, philanthropic, and public-sector opportunities that align with New World Kids, AI for Good, food security, youth programs, regenerative agriculture, digital equity, and community resilience.</p>
 <p>Each target can be marked as called, notes can be saved locally in the browser, and the red strike line makes completed outreach easy to scan during follow-up work.</p>
 </div>
 <details class="funding-collapsible">
@@ -734,458 +1873,3 @@ initResponse();
 </script>
 </body>
 </html>
-
-<div class="browser-bar">
-<span class="browser-dot"></span>
-<span class="browser-dot"></span>
-<span class="browser-dot"></span>
-
-</div>
-
-<div class="project-card-body">
-
-
-
-<p class="project-beta-note">this is still in Beta and is being updated daily</p>
-<details class="project-edit-panel">
-<summary>Edit image + URL</summary>
-<div class="project-edit-fields">
-<label>Website URL
-</label>
-<label>Hero image URL or local image path
-</label>
-</div>
-
-</details>
-</div>
-
-
-
-
-<!-- ══════════════════════════════════════════════════════════
-     SECTION 8: FUNDING ALIGNMENT OUTREACH BOARD
-═══════════════════════════════════════════════════════════ -->
-<section class="funding-tracker-section" data-chapter="" id="chapter-8">
-<div class="funding-tracker-container">
-<div class="section-tag" style="color:var(--gold);">Section 8</div>
-<h2>Funding Alignment Outreach Board</h2>
-<div class="body-text">
-<p>We designed these outreach boards to help ourselves and other clients in the future organize their campaigns. This board maps grant, corporate, university, philanthropic, and public-sector opportunities that align with New World Kids, , AI for Good, food security, youth programs, regenerative agriculture, digital equity, and community resilience.</p>
-<p>Each target can be marked as called, notes can be saved locally in the browser, and the red strike line makes completed outreach easy to scan during follow-up work.</p>
-</div>
-<div class="embedded-tracker-shell">
-<div class="embedded-tracker-topbar">
-<span>Interactive campaign tracker · locally saved notes</span>
-<a href="nwkids_funding_alignment_call_tracker_v2.html" rel="noopener" target="_blank">Open full board</a>
-</div>
-<iframe class="embedded-tracker-frame" srcdoc="&lt;!doctype html&gt;
-&lt;html lang=&quot;en&quot;&gt;
-&lt;head&gt;&lt;base target=&quot;_blank&quot;&gt;
-&lt;meta charset=&quot;utf-8&quot;&gt;&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width, initial-scale=1&quot;&gt;
-&lt;title&gt;NWKids Funding Alignment Call Tracker&lt;/title&gt;
-&lt;meta name=&quot;description&quot; content=&quot;Interactive grant and partnership outreach checklist for NWKids and .&quot;&gt;
-&lt;style&gt;
-:root{--bg:#0f1b16;--card:#1a2b24;--ink:#f6f1e8;--muted:#c7c0b4;--gold:#d5a64d;--gold2:#f0c46b;--green:#40c878;--red:#e55353;--line:rgba(255,255,255,.12);--sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,&quot;Segoe UI&quot;,sans-serif;--serif:Georgia,&quot;Times New Roman&quot;,serif}
-*{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0%,rgba(213,166,77,.16),transparent 28%),linear-gradient(180deg,var(--bg),#0b1411 70%);color:var(--ink);font-family:var(--sans);line-height:1.55}a{color:#74d89a;text-decoration:none}a:hover{text-decoration:underline}
-.header{position:sticky;top:0;z-index:20;background:rgba(15,27,22,.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(213,166,77,.35)}.header-inner{max-width:1320px;margin:0 auto;padding:18px 22px;display:flex;gap:20px;align-items:center;justify-content:space-between}.brand{display:flex;align-items:center;gap:14px}.mark{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:rgba(213,166,77,.12);border:1px solid rgba(213,166,77,.45);font-family:var(--serif);font-size:22px;color:var(--gold)}.brand h1{font-size:15px;margin:0;text-transform:uppercase;letter-spacing:.12em}.brand p{font-size:12px;margin:2px 0 0;color:var(--muted)}.header-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-button,.btn{border:1px solid rgba(213,166,77,.55);color:var(--ink);background:rgba(213,166,77,.1);border-radius:10px;padding:10px 13px;cursor:pointer;font-weight:700;font-size:12px;letter-spacing:.02em}button:hover,.btn:hover{background:rgba(213,166,77,.2);text-decoration:none}
-.hero{max-width:1320px;margin:0 auto;padding:52px 22px 28px}.kicker{color:var(--gold);font-size:12px;text-transform:uppercase;letter-spacing:.22em;font-weight:800;margin-bottom:16px}.hero h2{font-family:var(--serif);font-weight:400;font-size:clamp(38px,6vw,72px);line-height:.98;margin:0 0 20px}.hero .lead{max-width:860px;color:#e4ded2;font-size:18px;margin:0 0 28px}.grid-stats{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:14px;margin:26px 0 0;max-width:900px}.stat{background:rgba(255,255,255,.055);border:1px solid var(--line);border-radius:16px;padding:14px 16px}.stat strong{display:block;font-size:28px;color:var(--gold2);line-height:1}.stat span{color:var(--muted);font-size:12px}
-.controls{max-width:1320px;margin:0 auto;padding:14px 22px 26px;display:grid;grid-template-columns:1.4fr repeat(3,minmax(150px,.4fr));gap:12px}input,select,textarea{width:100%;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:12px;color:var(--ink);padding:12px 13px;font-family:var(--sans);font-size:14px;outline:none}textarea{min-height:92px;resize:vertical;margin-top:10px}input:focus,select:focus,textarea:focus{border-color:rgba(213,166,77,.7);box-shadow:0 0 0 3px rgba(213,166,77,.12)}select option{background:#13211b;color:white}
-.main{max-width:1320px;margin:0 auto;padding:0 22px 70px;display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start}.sidebar{position:sticky;top:94px;background:rgba(255,255,255,.045);border:1px solid var(--line);border-radius:20px;padding:18px}.sidebar h3{font-family:var(--serif);font-size:22px;font-weight:400;margin:0 0 12px}.sidebar ol{padding-left:22px;margin:0;color:var(--muted);font-size:13px}.sidebar li{margin:10px 0}.pipeline{display:grid;gap:14px}
-.card{position:relative;background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.04));border:1px solid var(--line);border-radius:20px;padding:18px;display:grid;grid-template-columns:170px 1fr;gap:18px;overflow:hidden}.card.called{border-color:rgba(64,200,120,.45);opacity:.88}.card.called:after{content:&quot;&quot;;position:absolute;left:-8%;right:-8%;top:50%;height:3px;transform:rotate(-1.5deg);background:linear-gradient(90deg,transparent,var(--red),transparent);z-index:1;pointer-events:none}.card-left{position:relative;z-index:2;border-right:1px solid var(--line);padding-right:16px}.card-main{position:relative;z-index:2}.status-toggle{display:flex;align-items:center;gap:10px;margin-bottom:14px;background:transparent;border:0;padding:0;color:inherit;text-align:left;width:auto}.check{width:34px;height:34px;border-radius:50%;border:1px solid rgba(255,255,255,.28);display:grid;place-items:center;font-weight:900;color:transparent;background:rgba(255,255,255,.04);flex:0 0 auto}.called .check{background:rgba(64,200,120,.18);border-color:var(--green);color:var(--green)}.status-text{font-weight:900}.called .status-text{color:var(--green)}
-.badge{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:5px 9px;font-size:11px;margin:0 6px 8px 0;color:#e7dfd3;background:rgba(255,255,255,.045)}.priority-A{border-color:rgba(64,200,120,.5);color:#91e8b0}.priority-B{border-color:rgba(213,166,77,.5);color:var(--gold2)}.priority-C{border-color:rgba(139,147,142,.5);color:#cbd2cd}.card h3{font-family:var(--serif);font-weight:400;font-size:28px;line-height:1.08;margin:0 0 8px}.called h3{text-decoration:line-through;text-decoration-color:var(--red);text-decoration-thickness:3px}
-.two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:12px}.info-box{background:rgba(0,0,0,.13);border:1px solid var(--line);border-radius:14px;padding:13px}.info-box b{display:block;color:var(--gold2);font-size:12px;text-transform:uppercase;letter-spacing:.12em;margin-bottom:6px}.info-box p{margin:0;color:#e3ddd1;font-size:14px}.links{display:flex;flex-wrap:wrap;gap:10px;margin-top:14px;align-items:center}.link-pill{display:inline-flex;gap:8px;align-items:center;border:1px solid rgba(116,216,154,.35);border-radius:999px;padding:8px 10px;background:rgba(116,216,154,.08);font-size:13px}.call-row{display:grid;grid-template-columns:160px 1fr;gap:12px;margin-top:12px}.small-label{color:var(--muted);font-size:12px;margin-bottom:5px;display:block}.empty{display:none;text-align:center;padding:48px;color:var(--muted);border:1px dashed var(--line);border-radius:20px}.source-note{max-width:1320px;margin:0 auto;padding:0 22px 28px;color:var(--muted);font-size:13px}.footer{max-width:1320px;margin:0 auto 60px;padding:22px;color:var(--muted);font-size:12px;border-top:1px solid var(--line)}
-@media(max-width:980px){.main{grid-template-columns:1fr}.sidebar{position:relative;top:0}.controls{grid-template-columns:1fr}.card{grid-template-columns:1fr}.card-left{border-right:0;border-bottom:1px solid var(--line);padding-right:0;padding-bottom:12px}.two-col{grid-template-columns:1fr}.call-row{grid-template-columns:1fr}.grid-stats{grid-template-columns:repeat(2,1fr)}}@media print{.header,.controls,.sidebar textarea,.header-actions{display:none!important}body{background:#fff;color:#111}.main{display:block}.card{break-inside:avoid;background:#fff;color:#111;border:1px solid #999}.info-box{background:#fff}a{color:#111}}
-&lt;/style&gt;
-&lt;/head&gt;
-&lt;body&gt;
-&lt;header class=&quot;header&quot;&gt;&lt;div class=&quot;header-inner&quot;&gt;&lt;div class=&quot;brand&quot;&gt;&lt;div class=&quot;mark&quot;&gt;✦&lt;/div&gt;&lt;div&gt;&lt;h1&gt;NWKids / Pauli Funding Tracker&lt;/h1&gt;&lt;p&gt;AI · regenerative agriculture · youth · food security · digital equity&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;header-actions&quot;&gt;&lt;button id=&quot;exportBtn&quot;&gt;Export notes JSON&lt;/button&gt;&lt;button id=&quot;printBtn&quot;&gt;Print / PDF&lt;/button&gt;&lt;button id=&quot;resetBtn&quot;&gt;Reset status&lt;/button&gt;&lt;/div&gt;&lt;/div&gt;&lt;/header&gt;
-&lt;section class=&quot;hero&quot;&gt;&lt;div class=&quot;kicker&quot;&gt;Seattle-first funding alignment map&lt;/div&gt;&lt;h2&gt;Grant, partnership &amp; call checklist&lt;/h2&gt;&lt;p class=&quot;lead&quot;&gt;We designed these outreach boards to help ourselves and other clients in the future organize their campaigns. Click a target when called, add the call note, and the card will show a green check with a red strike line so the next action is obvious. Notes and status are saved locally in their browser.&lt;/p&gt;&lt;div class=&quot;grid-stats&quot;&gt;&lt;div class=&quot;stat&quot;&gt;&lt;strong id=&quot;totalCount&quot;&gt;0&lt;/strong&gt;&lt;span&gt;Total targets researched&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;stat&quot;&gt;&lt;strong id=&quot;calledCount&quot;&gt;0&lt;/strong&gt;&lt;span&gt;Called / contacted&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;stat&quot;&gt;&lt;strong id=&quot;notCalledCount&quot;&gt;0&lt;/strong&gt;&lt;span&gt;Not called yet&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;stat&quot;&gt;&lt;strong id=&quot;priorityCount&quot;&gt;0&lt;/strong&gt;&lt;span&gt;Priority A targets&lt;/span&gt;&lt;/div&gt;&lt;/div&gt;&lt;/section&gt;
-&lt;section class=&quot;source-note&quot;&gt;Research date: 2026-07-10. Application windows change often. Treat this as an outreach tracker plus source map, then verify the live page before submitting.&lt;/section&gt;
-&lt;section class=&quot;controls&quot;&gt;&lt;input id=&quot;searchInput&quot; placeholder=&quot;Search funder, grant, category, contact, alignment...&quot;&gt;&lt;select id=&quot;categoryFilter&quot;&gt;&lt;option value=&quot;&quot;&gt;All categories&lt;/option&gt;&lt;/select&gt;&lt;select id=&quot;statusFilter&quot;&gt;&lt;option value=&quot;&quot;&gt;All statuses&lt;/option&gt;&lt;option value=&quot;called&quot;&gt;Called&lt;/option&gt;&lt;option value=&quot;not-called&quot;&gt;Not called&lt;/option&gt;&lt;/select&gt;&lt;select id=&quot;priorityFilter&quot;&gt;&lt;option value=&quot;&quot;&gt;All priorities&lt;/option&gt;&lt;option value=&quot;A&quot;&gt;Priority A&lt;/option&gt;&lt;option value=&quot;B&quot;&gt;Priority B&lt;/option&gt;&lt;option value=&quot;C&quot;&gt;Priority C&lt;/option&gt;&lt;/select&gt;&lt;/section&gt;
-&lt;main class=&quot;main&quot;&gt;&lt;aside class=&quot;sidebar&quot;&gt;&lt;h3&gt;Call order&lt;/h3&gt;&lt;ol&gt;&lt;li&gt;City/King County food + youth grants.&lt;/li&gt;&lt;li&gt;Microsoft/Google/AWS cloud and AI programs.&lt;/li&gt;&lt;li&gt;WSDA/USDA ag-specific grants.&lt;/li&gt;&lt;li&gt;UW/Ai2 technical partners.&lt;/li&gt;&lt;li&gt;Private foundations and donor networks.&lt;/li&gt;&lt;/ol&gt;&lt;h3 style=&quot;margin-top:24px&quot;&gt;Default ask&lt;/h3&gt;&lt;p style=&quot;color:var(--muted);font-size:13px&quot;&gt;“We are building a Seattle-born nonprofit AI + regenerative agriculture pilot. Who is the right person or program for youth food sovereignty, AI literacy, and community resilience?”&lt;/p&gt;&lt;/aside&gt;&lt;section&gt;&lt;div id=&quot;pipeline&quot; class=&quot;pipeline&quot;&gt;&lt;/div&gt;&lt;div id=&quot;empty&quot; class=&quot;empty&quot;&gt;No targets match the current filters.&lt;/div&gt;&lt;/section&gt;&lt;/main&gt;
-&lt;footer class=&quot;footer&quot;&gt;&lt;strong&gt;Positioning rule:&lt;/strong&gt; Do not pitch this as “we need help with a garden.” Pitch it as a repeatable social-impact operating system: AI-readable nonprofit infrastructure, youth food sovereignty, measurable regenerative agriculture, and Seattle-to-global proof.&lt;/footer&gt;
-&lt;script&gt;
-const TARGETS = [{&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;AI / Corporate Tech&quot;, &quot;region&quot;: &quot;Washington / Seattle&quot;, &quot;name&quot;: &quot;Microsoft AI for Good Lab — Open Call&quot;, &quot;who&quot;: &quot;Microsoft’s AI for Good Lab supports high-impact AI projects with Azure credits and collaboration with Microsoft data scientists.&quot;, &quot;why&quot;: &quot;Direct match for Washington-based AI, sustainability, food security, youth impact, and observable nonprofit agents.&quot;, &quot;opportunity&quot;: &quot;Two-year/open-call style collaboration; monitor next cycle.&quot;, &quot;contact&quot;: &quot;Program portal; reference Juan M. Lavista Ferres, AI for Good Lab.&quot;, &quot;address&quot;: &quot;Microsoft / Redmond, WA; program online&quot;, &quot;website&quot;: &quot;https://www.microsoft.com/en-us/research/academic-program/ai-for-good-lab-open-call/&quot;, &quot;nextAsk&quot;: &quot;Ask whether a sovereign nonprofit AI agent + food-forest data pilot fits the next AI for Good cycle.&quot;, &quot;notesSeed&quot;: &quot;Lead with Washington-born AI for food security and digital equity.&quot;, &quot;id&quot;: &quot;microsoft-ai-for-good-lab-open-call&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Cloud Credits / Infrastructure&quot;, &quot;region&quot;: &quot;Global / U.S.&quot;, &quot;name&quot;: &quot;Microsoft for Nonprofits — Azure Grant&quot;, &quot;who&quot;: &quot;Microsoft for Nonprofits provides eligible nonprofits with grants and discounted cloud, data, and AI tools.&quot;, &quot;why&quot;: &quot;Immediate infrastructure support for nonprofit-owned agents, dashboards, data, and public ledgers.&quot;, &quot;opportunity&quot;: &quot;Apply for eligibility and activate Azure sponsorship credits.&quot;, &quot;contact&quot;: &quot;Microsoft for Nonprofits eligibility portal.&quot;, &quot;address&quot;: &quot;Online portal&quot;, &quot;website&quot;: &quot;https://www.microsoft.com/en-us/nonprofits/azure&quot;, &quot;nextAsk&quot;: &quot;Verify NWKids eligibility and map Azure credits to first-year AI deployment.&quot;, &quot;notesSeed&quot;: &quot;Do this even if the larger AI for Good call is closed.&quot;, &quot;id&quot;: &quot;microsoft-for-nonprofits-azure-grant&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Employee Giving / Matching&quot;, &quot;region&quot;: &quot;Seattle / Global&quot;, &quot;name&quot;: &quot;Benevity Causes Portal — Microsoft Employee Giving&quot;, &quot;who&quot;: &quot;Benevity manages employer giving portals, including matching gifts and volunteer grants workflows.&quot;, &quot;why&quot;: &quot;Can unlock Microsoft-area employee giving, matching donations, and volunteer-hour grants.&quot;, &quot;opportunity&quot;: &quot;Register/verify NWKids in Benevity Causes and prepare a donor one-pager.&quot;, &quot;contact&quot;: &quot;Benevity Causes help portal / Microsoft employee portal for employees.&quot;, &quot;address&quot;: &quot;Online portal&quot;, &quot;website&quot;: &quot;https://causeshelp.benevity.org/hc/en-us&quot;, &quot;nextAsk&quot;: &quot;Confirm NWKids status, then target Microsoft employees and volunteers.&quot;, &quot;notesSeed&quot;: &quot;Low-friction first move.&quot;, &quot;id&quot;: &quot;benevity-causes-portal-microsoft-employee-giving&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Foundation / Agriculture&quot;, &quot;region&quot;: &quot;Seattle / Global&quot;, &quot;name&quot;: &quot;Bill &amp; Melinda Gates Foundation — Agricultural Development&quot;, &quot;who&quot;: &quot;Seattle-based global foundation with agricultural development work around smallholder productivity, climate adaptation, and digital tools.&quot;, &quot;why&quot;: &quot;Best fit if framed as digital agriculture, climate adaptation, youth/farmer training, and data infrastructure.&quot;, &quot;opportunity&quot;: &quot;Mostly staff-identified grants and RFP/Grand Challenges pathways.&quot;, &quot;contact&quot;: &quot;+1 206-709-3400; media@gatesfoundation.org for media; use RFP portals for funding.&quot;, &quot;address&quot;: &quot;500 Fifth Avenue North, Seattle, WA 98109&quot;, &quot;website&quot;: &quot;https://www.gatesfoundation.org/our-work/programs/global-growth-and-opportunity/agricultural-development&quot;, &quot;nextAsk&quot;: &quot;Ask which RFP or officer lane fits AI-enabled regenerative agriculture learning systems.&quot;, &quot;notesSeed&quot;: &quot;Do not pitch as just a garden.&quot;, &quot;id&quot;: &quot;bill-melinda-gates-foundation-agricultural-development&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Foundation / RFP&quot;, &quot;region&quot;: &quot;Global&quot;, &quot;name&quot;: &quot;Grand Challenges — Gates Foundation &amp; Partners&quot;, &quot;who&quot;: &quot;Grand Challenges posts targeted global health/development RFPs from Gates and partner initiatives.&quot;, &quot;why&quot;: &quot;Can fit digital agriculture, climate adaptation, and food systems only when a specific RFP matches.&quot;, &quot;opportunity&quot;: &quot;Monitor open RFPs and subscribe for updates.&quot;, &quot;contact&quot;: &quot;Online RFP portal and newsletter.&quot;, &quot;address&quot;: &quot;Online portal&quot;, &quot;website&quot;: &quot;https://gcgh.grandchallenges.org/grant-opportunities&quot;, &quot;nextAsk&quot;: &quot;Review monthly and pursue only exact-match calls.&quot;, &quot;notesSeed&quot;: &quot;Opportunity radar, not a guaranteed fit every cycle.&quot;, &quot;id&quot;: &quot;grand-challenges-gates-foundation-partners&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;AI / Corporate Tech&quot;, &quot;region&quot;: &quot;Global&quot;, &quot;name&quot;: &quot;Google.org Accelerator — Generative AI&quot;, &quot;who&quot;: &quot;Google.org supports nonprofits and social-impact organizations building high-impact generative AI applications.&quot;, &quot;why&quot;: &quot;Excellent fit for observable agents, AI-readable living documents, nonprofit ops agents, and youth AI literacy.&quot;, &quot;opportunity&quot;: &quot;Funding, technical support, and cloud support depending on the open cycle.&quot;, &quot;contact&quot;: &quot;Google.org accelerator application portal.&quot;, &quot;address&quot;: &quot;Online portal&quot;, &quot;website&quot;: &quot;https://impactchallenge.withgoogle.com/genaiaccelerator&quot;, &quot;nextAsk&quot;: &quot;Frame Pauli/NWKids as nonprofit AI operating infrastructure for under-resourced organizations.&quot;, &quot;notesSeed&quot;: &quot;Pair with Google for Nonprofits.&quot;, &quot;id&quot;: &quot;google-org-accelerator-generative-ai&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Cloud Credits / Tools&quot;, &quot;region&quot;: &quot;Global / U.S.&quot;, &quot;name&quot;: &quot;Google for Nonprofits&quot;, &quot;who&quot;: &quot;Google for Nonprofits gives eligible nonprofits access to no-cost and discounted Google tools and AI resources.&quot;, &quot;why&quot;: &quot;Useful for Workspace, YouTube, search visibility, data collection, maps, and donor marketing.&quot;, &quot;opportunity&quot;: &quot;Apply for eligibility; activate Workspace, YouTube Nonprofit Program, and Ad Grants.&quot;, &quot;contact&quot;: &quot;Online nonprofit application portal.&quot;, &quot;address&quot;: &quot;Online portal&quot;, &quot;website&quot;: &quot;https://www.google.com/nonprofits/&quot;, &quot;nextAsk&quot;: &quot;Verify eligibility and activate the full stack.&quot;, &quot;notesSeed&quot;: &quot;Immediate operations setup.&quot;, &quot;id&quot;: &quot;google-for-nonprofits&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Cloud Credits / Corporate Tech&quot;, &quot;region&quot;: &quot;U.S. / Global&quot;, &quot;name&quot;: &quot;AWS Imagine Grant + AWS Nonprofit Credits&quot;, &quot;who&quot;: &quot;AWS supports nonprofit cloud projects through Imagine Grant and annual nonprofit promotional credits.&quot;, &quot;why&quot;: &quot;Fit for cloud-hosted AI agents, data pipelines, grant intelligence, and public proof ledgers.&quot;, &quot;opportunity&quot;: &quot;Imagine Grant for cloud projects; separate annual nonprofit credits may be available.&quot;, &quot;contact&quot;: &quot;AWS Imagine Grant portal.&quot;, &quot;address&quot;: &quot;Online portal&quot;, &quot;website&quot;: &quot;https://aws.amazon.com/government-education/nonprofits/aws-imagine-grant-program/&quot;, &quot;nextAsk&quot;: &quot;Ask whether a sovereign AI operating system for small nonprofits fits a POC application.&quot;, &quot;notesSeed&quot;: &quot;Amazon is local to Seattle; use that story.&quot;, &quot;id&quot;: &quot;aws-imagine-grant-aws-nonprofit-credits&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Tools / Discounts&quot;, &quot;region&quot;: &quot;U.S. / Global&quot;, &quot;name&quot;: &quot;TechSoup&quot;, &quot;who&quot;: &quot;TechSoup helps nonprofits access donated and discounted software, hardware, services, and AI tools.&quot;, &quot;why&quot;: &quot;Reduces operating cost while assembling the nonprofit AI studio stack.&quot;, &quot;opportunity&quot;: &quot;Register, verify nonprofit status, and claim eligible tools.&quot;, &quot;contact&quot;: &quot;TechSoup support and marketplace.&quot;, &quot;address&quot;: &quot;Online marketplace&quot;, &quot;website&quot;: &quot;https://www.techsoup.org/&quot;, &quot;nextAsk&quot;: &quot;Register/verify NWKids and inventory all credits.&quot;, &quot;notesSeed&quot;: &quot;Operational savings count as support.&quot;, &quot;id&quot;: &quot;techsoup&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Seattle / Food Justice&quot;, &quot;region&quot;: &quot;Seattle&quot;, &quot;name&quot;: &quot;City of Seattle — Food Equity Fund&quot;, &quot;who&quot;: &quot;Seattle Department of Neighborhoods fund for community-led food justice, food security, cultural food, and food-system economic opportunity.&quot;, &quot;why&quot;: &quot;Direct match for Food · Water · Energy · Shelter, youth food education, and community-led food access.&quot;, &quot;opportunity&quot;: &quot;Prepare for next round; 2026 page showed closed after cycle activity.&quot;, &quot;contact&quot;: &quot;foodequityfund@seattle.gov / 206-727-FOOD (3663)&quot;, &quot;address&quot;: &quot;Seattle Department of Neighborhoods, 600 4th Ave, Seattle, WA 98104&quot;, &quot;website&quot;: &quot;https://www.seattle.gov/neighborhoods/community-grants/food-equity-fund&quot;, &quot;nextAsk&quot;: &quot;Request a one-on-one project manager meeting and next-cycle timing.&quot;, &quot;notesSeed&quot;: &quot;Bilingual youth food-sovereignty angle.&quot;, &quot;id&quot;: &quot;city-of-seattle-food-equity-fund&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Seattle / Digital Equity&quot;, &quot;region&quot;: &quot;Seattle&quot;, &quot;name&quot;: &quot;City of Seattle — Technology Matching Fund&quot;, &quot;who&quot;: &quot;Seattle IT digital equity grant program for community-driven technology access and skills.&quot;, &quot;why&quot;: &quot;Strong fit if positioned as AI literacy, youth workforce readiness, and community tech access.&quot;, &quot;opportunity&quot;: &quot;Monitor competitive TMF cycles.&quot;, &quot;contact&quot;: &quot;communitytechnology@seattle.gov&quot;, &quot;address&quot;: &quot;City of Seattle IT Department, Seattle, WA&quot;, &quot;website&quot;: &quot;https://www.seattle.gov/tech/grant-opportunities/digital-equity-grant-opportunities&quot;, &quot;nextAsk&quot;: &quot;Ask whether AI-literacy + urban agriculture tech training fits the next TMF cycle.&quot;, &quot;notesSeed&quot;: &quot;Technology as a community skill, not a shiny demo.&quot;, &quot;id&quot;: &quot;city-of-seattle-technology-matching-fund&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Seattle / Land Access&quot;, &quot;region&quot;: &quot;Seattle&quot;, &quot;name&quot;: &quot;Seattle P-Patch Community Gardening&quot;, &quot;who&quot;: &quot;City program managing community gardens and small growing plots across Seattle.&quot;, &quot;why&quot;: &quot;Good site-partner lane for a Seattle version of the food-forest/urban-growing model.&quot;, &quot;opportunity&quot;: &quot;Garden plots, community contacts, pilot sites, and neighborhood relationships.&quot;, &quot;contact&quot;: &quot;p-patch.don@seattle.gov / 206-684-0264&quot;, &quot;address&quot;: &quot;600 4th Avenue, 4th Floor, Seattle, WA 98104&quot;, &quot;website&quot;: &quot;https://www.seattle.gov/neighborhoods/p-patch-gardening&quot;, &quot;nextAsk&quot;: &quot;Ask which sites could host youth tech + growing workshops.&quot;, &quot;notesSeed&quot;: &quot;Not mainly a grant; use for pilot access.&quot;, &quot;id&quot;: &quot;seattle-p-patch-community-gardening&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Seattle / Climate Justice&quot;, &quot;region&quot;: &quot;Seattle&quot;, &quot;name&quot;: &quot;Seattle OSE — Green New Deal / Climate Justice&quot;, &quot;who&quot;: &quot;Seattle Office of Sustainability &amp; Environment supports climate justice, clean energy, and overburdened-community investments.&quot;, &quot;why&quot;: &quot;Fit for food systems, resilience hubs, clean energy, extreme heat/smoke resilience, and youth climate training.&quot;, &quot;opportunity&quot;: &quot;Monitor Seattle environment grants, incentives, and Green New Deal opportunities.&quot;, &quot;contact&quot;: &quot;Seattle OSE grants page.&quot;, &quot;address&quot;: &quot;City of Seattle, Seattle, WA&quot;, &quot;website&quot;: &quot;https://www.seattle.gov/environment/about-us/grants-and-incentives&quot;, &quot;nextAsk&quot;: &quot;Ask whether a food-water-energy-shelter resilience learning hub fits current programs.&quot;, &quot;notesSeed&quot;: &quot;Use resilience hub language.&quot;, &quot;id&quot;: &quot;seattle-ose-green-new-deal-climate-justice&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;King County / Conservation&quot;, &quot;region&quot;: &quot;Seattle / King County&quot;, &quot;name&quot;: &quot;KCD — Seattle Community Partnership Grant&quot;, &quot;who&quot;: &quot;King Conservation District and City of Seattle grant program for Seattle community-led natural resource improvement.&quot;, &quot;why&quot;: &quot;Strong fit for soil, water, restoration, food-growing, youth stewardship, and climate resilience.&quot;, &quot;opportunity&quot;: &quot;Recent program showed project awards up to $75,000; verify next RFP.&quot;, &quot;contact&quot;: &quot;district@kingcd.org / 425-282-1900&quot;, &quot;address&quot;: &quot;King Conservation District, Renton, WA&quot;, &quot;website&quot;: &quot;https://kingcd.org/tools-resources/grants/seattle-community-partnership-grant-program/&quot;, &quot;nextAsk&quot;: &quot;Ask whether a youth food forest + AI monitoring pilot fits.&quot;, &quot;notesSeed&quot;: &quot;One of the best Seattle-first targets.&quot;, &quot;id&quot;: &quot;kcd-seattle-community-partnership-grant&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;King County / Food Systems&quot;, &quot;region&quot;: &quot;King County&quot;, &quot;name&quot;: &quot;KCD — Regional Food System Grants&quot;, &quot;who&quot;: &quot;KCD supports local farmers, new farmers, food access, farm-product demand, and food-system infrastructure.&quot;, &quot;why&quot;: &quot;Fit for food production, new grower training, access, and local food systems with data/AI support.&quot;, &quot;opportunity&quot;: &quot;Recurring grant cycle; nonprofits, schools, farms, and others may be eligible.&quot;, &quot;contact&quot;: &quot;district@kingcd.org / 425-282-1900&quot;, &quot;address&quot;: &quot;800 SW 39th St, Suite 150, Renton, WA 98057&quot;, &quot;website&quot;: &quot;https://kingcd.org/programs/better-food/regional-food-system-program/&quot;, &quot;nextAsk&quot;: &quot;Ask whether NWKids should apply directly or partner with a farm/school.&quot;, &quot;notesSeed&quot;: &quot;Use local-food-system infrastructure language.&quot;, &quot;id&quot;: &quot;kcd-regional-food-system-grants&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;King County / Youth&quot;, &quot;region&quot;: &quot;King County&quot;, &quot;name&quot;: &quot;King County — Best Starts for Kids&quot;, &quot;who&quot;: &quot;Voter-approved King County initiative funding supports from prenatal development through young adulthood.&quot;, &quot;why&quot;: &quot;Fit for youth mentorship, afterschool/summer learning, food education, AI literacy, and resilience.&quot;, &quot;opportunity&quot;: &quot;Monitor open RFPs and capacity-building opportunities.&quot;, &quot;contact&quot;: &quot;Best.Starts@kingcounty.gov&quot;, &quot;address&quot;: &quot;King County DCHS, Seattle, WA&quot;, &quot;website&quot;: &quot;https://kingcounty.gov/en/dept/dchs/human-social-services/community-funded-initiatives/best-starts-for-kids/programs-opportunities&quot;, &quot;nextAsk&quot;: &quot;Ask what open RFP fits AI + food sovereignty youth pathways.&quot;, &quot;notesSeed&quot;: &quot;Youth development first; tech/ag as mechanism.&quot;, &quot;id&quot;: &quot;king-county-best-starts-for-kids&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;King County / Food Security&quot;, &quot;region&quot;: &quot;King County&quot;, &quot;name&quot;: &quot;King County VSHSL — Food Security Grants&quot;, &quot;who&quot;: &quot;Veterans, Seniors and Human Services Levy funding can support food access/security efforts.&quot;, &quot;why&quot;: &quot;Potential fit for local food access, distribution, pantry partnerships, or food-security operations.&quot;, &quot;opportunity&quot;: &quot;Monitor VSHSL and food security capital/operating grant rounds.&quot;, &quot;contact&quot;: &quot;VSHSL@kingcounty.gov&quot;, &quot;address&quot;: &quot;King County, Seattle, WA&quot;, &quot;website&quot;: &quot;https://kingcounty.gov/en/dept/dchs/human-social-services/community-funded-initiatives/veterans-seniors-human-services-levy/funding-rfps&quot;, &quot;nextAsk&quot;: &quot;Ask which food-security RFPs are open and what partners are needed.&quot;, &quot;notesSeed&quot;: &quot;Best with a King County service partner.&quot;, &quot;id&quot;: &quot;king-county-vshsl-food-security-grants&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Washington State / Agriculture&quot;, &quot;region&quot;: &quot;Washington&quot;, &quot;name&quot;: &quot;WSDA — Specialty Crop Block Grant Program&quot;, &quot;who&quot;: &quot;WSDA administers USDA Specialty Crop Block Grants for projects improving specialty crop competitiveness.&quot;, &quot;why&quot;: &quot;Fit for pest detection, water management, harvest efficiency, crop documentation, or market access for specialty crops.&quot;, &quot;opportunity&quot;: &quot;Competitive state-administered program; watch annual RFP windows.&quot;, &quot;contact&quot;: &quot;Leisa Schumaker — specialtycrop@agr.wa.gov / 360-485-1255&quot;, &quot;address&quot;: &quot;WSDA, Natural Resources Building, PO Box 42560, Olympia, WA 98504-2560&quot;, &quot;website&quot;: &quot;https://agr.wa.gov/services/grant-opportunities&quot;, &quot;nextAsk&quot;: &quot;Ask if a syntropic food-forest data/crop-monitoring pilot qualifies.&quot;, &quot;notesSeed&quot;: &quot;Pitch concrete ag-tech outcomes.&quot;, &quot;id&quot;: &quot;wsda-specialty-crop-block-grant-program&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Washington State / Food Infrastructure&quot;, &quot;region&quot;: &quot;Washington&quot;, &quot;name&quot;: &quot;WSDA — Local Food System Infrastructure Grant&quot;, &quot;who&quot;: &quot;WSDA supports local food supply chains, market access, processing, distribution, and farm/food infrastructure.&quot;, &quot;why&quot;: &quot;Fit for equipment, storage, processing, and distribution once Seattle model has production/partners.&quot;, &quot;opportunity&quot;: &quot;Current page says next anticipated round Summer/Fall 2027.&quot;, &quot;contact&quot;: &quot;localfoodinfrastructure@agr.wa.gov&quot;, &quot;address&quot;: &quot;WSDA, Olympia, WA&quot;, &quot;website&quot;: &quot;https://agr.wa.gov/departments/business-and-marketing-support/small-farm/infrastructure-grant&quot;, &quot;nextAsk&quot;: &quot;Ask what documentation and partners to prepare before 2027.&quot;, &quot;notesSeed&quot;: &quot;Longer-term infrastructure target.&quot;, &quot;id&quot;: &quot;wsda-local-food-system-infrastructure-grant&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Washington State / Food + Schools&quot;, &quot;region&quot;: &quot;Washington&quot;, &quot;name&quot;: &quot;WSDA — Farm to School Purchasing Grants&quot;, &quot;who&quot;: &quot;WSDA Farm to School connects school/childcare meals with Washington-grown food purchasing.&quot;, &quot;why&quot;: &quot;Fit through eligible school/childcare partners buying local food and teaching food systems.&quot;, &quot;opportunity&quot;: &quot;Partner-led purchasing grants; NWKids likely supports as education/production partner.&quot;, &quot;contact&quot;: &quot;farmtoschool@agr.wa.gov; Rachel Breslauer rachel.breslauer@agr.wa.gov / 360-819-7412&quot;, &quot;address&quot;: &quot;WSDA, Olympia, WA&quot;, &quot;website&quot;: &quot;https://agr.wa.gov/departments/business-and-marketing-support/farm-to-school/wsda-farm-to-school-program&quot;, &quot;nextAsk&quot;: &quot;Ask which school/childcare partners are eligible.&quot;, &quot;notesSeed&quot;: &quot;Partner-led application.&quot;, &quot;id&quot;: &quot;wsda-farm-to-school-purchasing-grants&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Washington State / Regenerative Farming&quot;, &quot;region&quot;: &quot;Washington&quot;, &quot;name&quot;: &quot;Tilth Alliance — Washington State Organic &amp; Sustainable Farming Fund&quot;, &quot;who&quot;: &quot;Tilth Alliance administers a fund supporting organic and sustainable farming projects in Washington.&quot;, &quot;why&quot;: &quot;Strong language fit for regenerative agriculture, soil health, biodiversity, climate resilience, and farmer education.&quot;, &quot;opportunity&quot;: &quot;Grant cycles vary; contact Rae Russell.&quot;, &quot;contact&quot;: &quot;Rae Russell — raerussell@tilthalliance.org / info@tilthalliance.org / 206-633-0451&quot;, &quot;address&quot;: &quot;4649 Sunnyside Ave N, Suite 100, Seattle, WA 98103&quot;, &quot;website&quot;: &quot;https://tilthalliance.org/our-work/wa-farming-agriculture/washington-state-organic-sustainable-farming-fund/&quot;, &quot;nextAsk&quot;: &quot;Ask if NWKids can apply directly or via a Washington farm partner.&quot;, &quot;notesSeed&quot;: &quot;Need Washington farm/project specifics.&quot;, &quot;id&quot;: &quot;tilth-alliance-washington-state-organic-sustainable-farming-fund&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Washington State / Clean Energy&quot;, &quot;region&quot;: &quot;Washington&quot;, &quot;name&quot;: &quot;WA Department of Commerce — Clean Energy Grants&quot;, &quot;who&quot;: &quot;Commerce supports clean energy deployment advancing equity, resilience, energy access, and greenhouse-gas reduction.&quot;, &quot;why&quot;: &quot;Fit for solar, battery backup, smart greenhouse energy, low-income resilience, or food-energy-water systems.&quot;, &quot;opportunity&quot;: &quot;Monitor EPIC/Clean Energy grant rounds and FundHubWA.&quot;, &quot;contact&quot;: &quot;Clean Energy Grants / EPIC pages; prior Q&amp;A channel cef@commerce.wa.gov&quot;, &quot;address&quot;: &quot;Washington State Department of Commerce, Olympia, WA&quot;, &quot;website&quot;: &quot;https://www.commerce.wa.gov/epic/clean-energy-grants/&quot;, &quot;nextAsk&quot;: &quot;Ask which round fits a community food-energy resilience hub.&quot;, &quot;notesSeed&quot;: &quot;Add energy metrics first.&quot;, &quot;id&quot;: &quot;wa-department-of-commerce-clean-energy-grants&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Federal / Urban Agriculture&quot;, &quot;region&quot;: &quot;U.S.&quot;, &quot;name&quot;: &quot;USDA — Urban Agriculture and Innovative Production Grants&quot;, &quot;who&quot;: &quot;USDA UAIP grants initiate or expand urban/suburban farming, gardening, food access, education, startup costs, and urban production policy.&quot;, &quot;why&quot;: &quot;Direct fit for Seattle urban agriculture, youth education, smart-growing systems, and community food access.&quot;, &quot;opportunity&quot;: &quot;Competitive federal grant cycle via Grants.gov.&quot;, &quot;contact&quot;: &quot;urbanagriculture@usda.gov&quot;, &quot;address&quot;: &quot;Office of Urban Agriculture and Innovative Production, 1400 Independence Ave SW, Washington, DC 20250&quot;, &quot;website&quot;: &quot;https://www.usda.gov/farming-and-ranching/agricultural-education-and-outreach/urban-agriculture-and-innovative-production/urban-agriculture-and-innovative-production-grants&quot;, &quot;nextAsk&quot;: &quot;Prepare Seattle pilot narrative and monitor Grants.gov.&quot;, &quot;notesSeed&quot;: &quot;Core national target.&quot;, &quot;id&quot;: &quot;usda-urban-agriculture-and-innovative-production-grants&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Federal / Food Security&quot;, &quot;region&quot;: &quot;U.S.&quot;, &quot;name&quot;: &quot;USDA NIFA — Community Food Projects Competitive Grant Program&quot;, &quot;who&quot;: &quot;Federal program for community-based food security projects designed to become self-reliant after one-time support.&quot;, &quot;why&quot;: &quot;Strong fit for food sovereignty, local food systems, youth education, and sustainable operating models.&quot;, &quot;opportunity&quot;: &quot;Multi-year community food projects; match requirements may apply.&quot;, &quot;contact&quot;: &quot;NIFA / Grants.gov portal.&quot;, &quot;address&quot;: &quot;USDA NIFA, Washington, DC&quot;, &quot;website&quot;: &quot;https://www.nifa.usda.gov/grants/funding-opportunities/community-food-projects-competitive-grants-program&quot;, &quot;nextAsk&quot;: &quot;Check eligibility, match requirements, and coalition partners.&quot;, &quot;notesSeed&quot;: &quot;Needs coalition and sustainability plan.&quot;, &quot;id&quot;: &quot;usda-nifa-community-food-projects-competitive-grant-program&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Federal / Farm Capital&quot;, &quot;region&quot;: &quot;Washington&quot;, &quot;name&quot;: &quot;USDA Farm Service Agency — Washington State Office&quot;, &quot;who&quot;: &quot;FSA helps farmers start/grow operations through loans and financial assistance.&quot;, &quot;why&quot;: &quot;Useful for land, equipment, farm operating capital, or beginning/underserved grower support.&quot;, &quot;opportunity&quot;: &quot;Farm Ownership Loans, Operating Loans, and program guidance.&quot;, &quot;contact&quot;: &quot;Washington Office: 509-323-3000&quot;, &quot;address&quot;: &quot;11707 E. Sprague Ave., Suite 303, Spokane Valley, WA 99206&quot;, &quot;website&quot;: &quot;https://www.fsa.usda.gov/state-offices/washington&quot;, &quot;nextAsk&quot;: &quot;Ask what beginning/underserved farmer programs support a Seattle-linked demonstration farm.&quot;, &quot;notesSeed&quot;: &quot;More capital planning than grants.&quot;, &quot;id&quot;: &quot;usda-farm-service-agency-washington-state-office&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Federal / Conservation Tech&quot;, &quot;region&quot;: &quot;U.S. / Washington&quot;, &quot;name&quot;: &quot;USDA NRCS — Conservation Innovation Grants&quot;, &quot;who&quot;: &quot;NRCS CIG supports new tools, practices, and technologies for conservation on private lands.&quot;, &quot;why&quot;: &quot;Fit for AI-assisted soil health, water conservation, regenerative measurement, and low-cost farm data tools.&quot;, &quot;opportunity&quot;: &quot;National and state opportunities; monitor open periods.&quot;, &quot;contact&quot;: &quot;NRCS CIG portal / Washington NRCS office.&quot;, &quot;address&quot;: &quot;NRCS Washington State Office / USDA&quot;, &quot;website&quot;: &quot;https://www.nrcs.usda.gov/programs-initiatives/conservation-innovation-grants&quot;, &quot;nextAsk&quot;: &quot;Ask whether AI soil-health/food-forest monitoring fits CIG, EQIP, or RCPP.&quot;, &quot;notesSeed&quot;: &quot;Needs measurable conservation tech.&quot;, &quot;id&quot;: &quot;usda-nrcs-conservation-innovation-grants&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Federal / Sustainable Agriculture&quot;, &quot;region&quot;: &quot;Western U.S. / Washington&quot;, &quot;name&quot;: &quot;Western SARE — Sustainable Agriculture Grants&quot;, &quot;who&quot;: &quot;Western SARE provides grants and education for sustainable agriculture innovations across Washington and the western region.&quot;, &quot;why&quot;: &quot;Fit for regenerative farming trials, farmer education, and professional-producer collaborations.&quot;, &quot;opportunity&quot;: &quot;Multiple grant types; cycles vary.&quot;, &quot;contact&quot;: &quot;Western SARE grants portal.&quot;, &quot;address&quot;: &quot;Regional program, Western U.S.&quot;, &quot;website&quot;: &quot;https://western.sare.org/grants/&quot;, &quot;nextAsk&quot;: &quot;Match project to Research &amp; Education, Farmer/Rancher, or Professional + Producer.&quot;, &quot;notesSeed&quot;: &quot;Best with farm partner and trial question.&quot;, &quot;id&quot;: &quot;western-sare-sustainable-agriculture-grants&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;University / Technical Talent&quot;, &quot;region&quot;: &quot;Seattle&quot;, &quot;name&quot;: &quot;UW eScience Institute — Data Science for Social Good&quot;, &quot;who&quot;: &quot;UW program pairing students, stakeholders, data scientists, and domain researchers on social-good data projects.&quot;, &quot;why&quot;: &quot;Excellent fit for crop image data, grant matching, soil logs, youth outcomes, or public ledger analytics.&quot;, &quot;opportunity&quot;: &quot;Summer project partnership; not a cash grant but strong technical labor/research support.&quot;, &quot;contact&quot;: &quot;UW eScience Institute program page / general contact routes.&quot;, &quot;address&quot;: &quot;University of Washington, Seattle, WA&quot;, &quot;website&quot;: &quot;https://escience.washington.edu/using-data-science/data-science-for-social-good/&quot;, &quot;nextAsk&quot;: &quot;Pitch a 10-week data problem: grant discovery, food-forest monitoring, or impact dashboard.&quot;, &quot;notesSeed&quot;: &quot;Prepare clean dataset and research question.&quot;, &quot;id&quot;: &quot;uw-escience-institute-data-science-for-social-good&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;AI / Environment&quot;, &quot;region&quot;: &quot;Seattle / Global&quot;, &quot;name&quot;: &quot;Ai2 EarthRanger&quot;, &quot;who&quot;: &quot;Ai2’s EarthRanger is a free conservation technology platform for protected-area and wildlife decision support.&quot;, &quot;why&quot;: &quot;Fit if food forest expands into biodiversity, habitat, sensors, and environmental monitoring.&quot;, &quot;opportunity&quot;: &quot;Partnership, platform learning, and conservation tech awards when open.&quot;, &quot;contact&quot;: &quot;Ai2 contact page / EarthRanger support.&quot;, &quot;address&quot;: &quot;Ai2, 3800 Latona Ave NE, Suite 300, Seattle, WA 98105&quot;, &quot;website&quot;: &quot;https://allenai.org/earthranger&quot;, &quot;nextAsk&quot;: &quot;Ask if small-site biodiversity and food-forest monitoring fits the EarthRanger ecosystem.&quot;, &quot;notesSeed&quot;: &quot;AI/environment credibility target.&quot;, &quot;id&quot;: &quot;ai2-earthranger&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;AI / Startup Support&quot;, &quot;region&quot;: &quot;Seattle&quot;, &quot;name&quot;: &quot;AI House / AI2 Incubator Ecosystem&quot;, &quot;who&quot;: &quot;Seattle AI startup/community ecosystem originating from AI2 Incubator with community, incubator, and capital pathways.&quot;, &quot;why&quot;: &quot;Fit for  as a social-purpose AI studio or product company.&quot;, &quot;opportunity&quot;: &quot;Networking, mentorship, investor access, and possible incubation.&quot;, &quot;contact&quot;: &quot;AI House / AI2 ecosystem online contact routes.&quot;, &quot;address&quot;: &quot;Seattle, WA&quot;, &quot;website&quot;: &quot;https://www.newtechnorthwest.com/community-resources/incubators/&quot;, &quot;nextAsk&quot;: &quot;Ask where a social-purpose AI studio serving nonprofits fits.&quot;, &quot;notesSeed&quot;: &quot;Pitch , not NWKids.&quot;, &quot;id&quot;: &quot;ai-house-ai2-incubator-ecosystem&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Local Philanthropy&quot;, &quot;region&quot;: &quot;Seattle / King County&quot;, &quot;name&quot;: &quot;Seattle Foundation — Current Grant Opportunities&quot;, &quot;who&quot;: &quot;Major community foundation serving the Seattle region with competitive grants and donor-advised fund ecosystem.&quot;, &quot;why&quot;: &quot;Fit for food security, youth, racial equity, community resilience, and donor-introduction strategy.&quot;, &quot;opportunity&quot;: &quot;Monitor current grants and seek donor-advised fund pathways.&quot;, &quot;contact&quot;: &quot;communitygrantmaking@seattlefoundation.org / 206-515-2109&quot;, &quot;address&quot;: &quot;Seattle Foundation, Seattle, WA&quot;, &quot;website&quot;: &quot;https://www.seattlefoundation.org/current-grant-opportunities/&quot;, &quot;nextAsk&quot;: &quot;Ask which grant cycle or donor-advised lane matches youth food security + AI capacity.&quot;, &quot;notesSeed&quot;: &quot;Relationship call, not just an application.&quot;, &quot;id&quot;: &quot;seattle-foundation-current-grant-opportunities&quot;}, {&quot;priority&quot;: &quot;A&quot;, &quot;category&quot;: &quot;Local Philanthropy / Capacity&quot;, &quot;region&quot;: &quot;Seattle / King County&quot;, &quot;name&quot;: &quot;Social Venture Partners Seattle&quot;, &quot;who&quot;: &quot;SVP Seattle is a philanthropic network giving, volunteering, learning, and supporting BIPOC-led nonprofit capacity in King County.&quot;, &quot;why&quot;: &quot;Fit for strategic help, board/advisor network, capacity building, and skilled volunteer support.&quot;, &quot;opportunity&quot;: &quot;Partnership, capacity building, skilled volunteers, and grants when aligned.&quot;, &quot;contact&quot;: &quot;info@svpseattle.org / 206-374-8757&quot;, &quot;address&quot;: &quot;Seattle, WA&quot;, &quot;website&quot;: &quot;https://svpseattle.org/&quot;, &quot;nextAsk&quot;: &quot;Ask for the right pathway for NWKids and Pauli’s nonprofit capacity-building model.&quot;, &quot;notesSeed&quot;: &quot;Emphasize community-led capacity building.&quot;, &quot;id&quot;: &quot;social-venture-partners-seattle&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Private Foundation&quot;, &quot;region&quot;: &quot;Puget Sound&quot;, &quot;name&quot;: &quot;The Norcliffe Foundation&quot;, &quot;who&quot;: &quot;Seattle-established private family foundation funding Puget Sound nonprofits in environment/community, education, basic needs, health, and arts.&quot;, &quot;why&quot;: &quot;Fit for local education, environment/community, youth, and basic-needs pieces.&quot;, &quot;opportunity&quot;: &quot;Online EGrant application for eligible 501(c)(3)s operating in Puget Sound.&quot;, &quot;contact&quot;: &quot;info@norcliffefoundation.org / 206-682-4820&quot;, &quot;address&quot;: &quot;600 University St, Suite 2003, Seattle, WA 98101&quot;, &quot;website&quot;: &quot;https://www.norcliffefoundation.org/&quot;, &quot;nextAsk&quot;: &quot;Confirm eligibility and ask whether food-sovereignty/youth climate education fits.&quot;, &quot;notesSeed&quot;: &quot;Traditional foundation; simple ask.&quot;, &quot;id&quot;: &quot;the-norcliffe-foundation&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Private Foundation / Capacity&quot;, &quot;region&quot;: &quot;Pacific Northwest&quot;, &quot;name&quot;: &quot;M.J. Murdock Charitable Trust&quot;, &quot;who&quot;: &quot;Pacific Northwest trust supporting nonprofit capacity, capital projects, programming, and organizational growth.&quot;, &quot;why&quot;: &quot;Fit for long-term capacity, staff, technology improvement, facilities, or capital once operations are stable.&quot;, &quot;opportunity&quot;: &quot;Strategic project and capital grants.&quot;, &quot;contact&quot;: &quot;Grant inquiry portal / 360-694-8415&quot;, &quot;address&quot;: &quot;Vancouver, WA&quot;, &quot;website&quot;: &quot;https://murdocktrust.org/grant-opportunities&quot;, &quot;nextAsk&quot;: &quot;Ask if a technology/capacity project for nonprofit AI operations fits.&quot;, &quot;notesSeed&quot;: &quot;May require stronger maturity and matching support.&quot;, &quot;id&quot;: &quot;m-j-murdock-charitable-trust&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Private Foundation / Trust-Based&quot;, &quot;region&quot;: &quot;Washington / California&quot;, &quot;name&quot;: &quot;Satterberg Foundation&quot;, &quot;who&quot;: &quot;Family foundation providing trust-based support to nonprofits working toward a just society and sustainable environment.&quot;, &quot;why&quot;: &quot;Mission fit for justice, community-led work, and sustainable environment; access is relationship-heavy.&quot;, &quot;opportunity&quot;: &quot;Relationship-building target; no unsolicited core support applications.&quot;, &quot;contact&quot;: &quot;Website contact / 206-441-3045&quot;, &quot;address&quot;: &quot;Seattle, WA&quot;, &quot;website&quot;: &quot;https://satterberg.org/grantmaking/&quot;, &quot;nextAsk&quot;: &quot;Ask for guidance or warm-intro pathway, not a cold grant request.&quot;, &quot;notesSeed&quot;: &quot;Use after one-pager and proof site are clean.&quot;, &quot;id&quot;: &quot;satterberg-foundation&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Local Workforce / Green Jobs&quot;, &quot;region&quot;: &quot;South King County / Port Communities&quot;, &quot;name&quot;: &quot;Port of Seattle — South King and Port Communities Fund&quot;, &quot;who&quot;: &quot;Port program funding community-led career readiness connected to aviation, construction, green jobs, and maritime careers.&quot;, &quot;why&quot;: &quot;Fit if NWKids creates youth workforce pathways around green jobs, clean tech, logistics, or port communities.&quot;, &quot;opportunity&quot;: &quot;Economic Opportunities for Communities RFP cycles.&quot;, &quot;contact&quot;: &quot;Port of Seattle SKPCF program page.&quot;, &quot;address&quot;: &quot;Port of Seattle, Seattle, WA&quot;, &quot;website&quot;: &quot;https://www.portseattle.org/programs/south-king-and-port-communities-fund&quot;, &quot;nextAsk&quot;: &quot;Ask whether AI + green-jobs youth training qualifies in the next cycle.&quot;, &quot;notesSeed&quot;: &quot;South King County partner improves fit.&quot;, &quot;id&quot;: &quot;port-of-seattle-south-king-and-port-communities-fund&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;Seattle / Community Development&quot;, &quot;region&quot;: &quot;Seattle&quot;, &quot;name&quot;: &quot;Seattle Equitable Development Initiative&quot;, &quot;who&quot;: &quot;Seattle OPCD initiative funding community-led real estate and anti-displacement projects.&quot;, &quot;why&quot;: &quot;Fit only if there is a physical hub, food innovation space, resilience hub, or community-owned facility.&quot;, &quot;opportunity&quot;: &quot;RFPs for community-rooted development projects.&quot;, &quot;contact&quot;: &quot;Seattle OPCD EDI program page.&quot;, &quot;address&quot;: &quot;City of Seattle, Seattle, WA&quot;, &quot;website&quot;: &quot;https://www.seattle.gov/opcd/current-projects/equitable-development-initiative&quot;, &quot;nextAsk&quot;: &quot;Ask if a food/AI/community resilience hub is eligible or needs a real-estate partner.&quot;, &quot;notesSeed&quot;: &quot;Use for hub/property strategy later.&quot;, &quot;id&quot;: &quot;seattle-equitable-development-initiative&quot;}, {&quot;priority&quot;: &quot;B&quot;, &quot;category&quot;: &quot;University Extension&quot;, &quot;region&quot;: &quot;King County / Washington&quot;, &quot;name&quot;: &quot;WSU Extension — King County&quot;, &quot;who&quot;: &quot;Washington State University Extension provides local education and technical assistance for food systems, gardening, and community programs.&quot;, &quot;why&quot;: &quot;Fit for technical credibility, curriculum partnerships, master gardener/farm education, and local food-system expertise.&quot;, &quot;opportunity&quot;: &quot;Technical assistance, coalition support, and curriculum validation.&quot;, &quot;contact&quot;: &quot;425-738-0111&quot;, &quot;address&quot;: &quot;560 Naches Avenue SW, Suite 130, Renton, WA 98057&quot;, &quot;website&quot;: &quot;https://extension.wsu.edu/king/&quot;, &quot;nextAsk&quot;: &quot;Ask who handles urban agriculture/food systems and whether they can advise on grants.&quot;, &quot;notesSeed&quot;: &quot;Strengthens grant proposals.&quot;, &quot;id&quot;: &quot;wsu-extension-king-county&quot;}, {&quot;priority&quot;: &quot;C&quot;, &quot;category&quot;: &quot;Investor / Network&quot;, &quot;region&quot;: &quot;Seattle&quot;, &quot;name&quot;: &quot;Cascadia Capital — Robotics, Automation &amp; AI Network&quot;, &quot;who&quot;: &quot;Seattle investment bank with sector coverage around AI, automation, robotics, and growth companies.&quot;, &quot;why&quot;: &quot;Not a grant maker, but useful for impact-investor network and strategic positioning for .&quot;, &quot;opportunity&quot;: &quot;Networking, reports, events, introductions, and investor language refinement.&quot;, &quot;contact&quot;: &quot;Cascadia Capital website contact.&quot;, &quot;address&quot;: &quot;Seattle, WA&quot;, &quot;website&quot;: &quot;https://www.cascadiacapital.com/&quot;, &quot;nextAsk&quot;: &quot;Ask for reports/events or introductions to AI/automation impact investors.&quot;, &quot;notesSeed&quot;: &quot;Investor lane only; do not ask for nonprofit grant.&quot;, &quot;id&quot;: &quot;cascadia-capital-robotics-automation-ai-network&quot;}];
-const STORE_KEY = &quot;nwkids_funding_tracker_v1&quot;;
-let state = {};
-try { state = JSON.parse(localStorage.getItem(STORE_KEY) || &quot;{}&quot;); } catch(e) { state = {}; }
-const pipeline = document.getElementById(&quot;pipeline&quot;), empty = document.getElementById(&quot;empty&quot;);
-const searchInput = document.getElementById(&quot;searchInput&quot;), categoryFilter = document.getElementById(&quot;categoryFilter&quot;), statusFilter = document.getElementById(&quot;statusFilter&quot;), priorityFilter = document.getElementById(&quot;priorityFilter&quot;);
-function save(){localStorage.setItem(STORE_KEY, JSON.stringify(state));}
-function record(id){ if(!state[id]) state[id]={called:false,note:&quot;&quot;,date:&quot;&quot;}; return state[id];}
-function esc(s){return String(s||&quot;&quot;).replace(/[&amp;&lt;&gt;&quot;']/g,m=&gt;({&quot;&amp;&quot;:&quot;&amp;amp;&quot;,&quot;&lt;&quot;:&quot;&amp;lt;&quot;,&quot;&gt;&quot;:&quot;&amp;gt;&quot;,&quot;\&quot;&quot;:&quot;&amp;quot;&quot;,&quot;'&quot;:&quot;&amp;#39;&quot;}[m]));}
-function renderCategories(){const cats=[...new Set(TARGETS.map(t=&gt;t.category))].sort();categoryFilter.innerHTML='&lt;option value=&quot;&quot;&gt;All categories&lt;/option&gt;'+cats.map(c=&gt;`&lt;option value=&quot;${esc(c)}&quot;&gt;${esc(c)}&lt;/option&gt;`).join(&quot;&quot;);}
-function updateStats(){const called=TARGETS.filter(t=&gt;record(t.id).called).length;document.getElementById(&quot;totalCount&quot;).textContent=TARGETS.length;document.getElementById(&quot;calledCount&quot;).textContent=called;document.getElementById(&quot;notCalledCount&quot;).textContent=TARGETS.length-called;document.getElementById(&quot;priorityCount&quot;).textContent=TARGETS.filter(t=&gt;t.priority===&quot;A&quot;).length;}
-function render(){
- const q=searchInput.value.trim().toLowerCase(), cat=categoryFilter.value, status=statusFilter.value, pri=priorityFilter.value;
- const filtered=TARGETS.filter(t=&gt;{const r=record(t.id), hay=Object.values(t).join(&quot; &quot;).toLowerCase(); if(q&amp;&amp;!hay.includes(q))return false; if(cat&amp;&amp;t.category!==cat)return false; if(pri&amp;&amp;t.priority!==pri)return false; if(status===&quot;called&quot;&amp;&amp;!r.called)return false; if(status===&quot;not-called&quot;&amp;&amp;r.called)return false; return true;});
- pipeline.innerHTML=filtered.map(t=&gt;{const r=record(t.id), called=!!r.called; return `&lt;article class=&quot;card ${called?&quot;called&quot;:&quot;&quot;}&quot; data-id=&quot;${esc(t.id)}&quot;&gt;&lt;div class=&quot;card-left&quot;&gt;&lt;button class=&quot;status-toggle&quot; data-action=&quot;toggle&quot; aria-label=&quot;Toggle called status&quot;&gt;&lt;span class=&quot;check&quot;&gt;${called?&quot;✓&quot;:&quot;•&quot;}&lt;/span&gt;&lt;span&gt;&lt;span class=&quot;status-text&quot;&gt;${called?&quot;Called&quot;:&quot;Not called yet&quot;}&lt;/span&gt;&lt;br&gt;&lt;small style=&quot;color:var(--muted)&quot;&gt;${called&amp;&amp;r.date?esc(r.date):&quot;Click after outreach&quot;}&lt;/small&gt;&lt;/span&gt;&lt;/button&gt;&lt;span class=&quot;badge priority-${esc(t.priority)}&quot;&gt;Priority ${esc(t.priority)}&lt;/span&gt;&lt;span class=&quot;badge&quot;&gt;${esc(t.region)}&lt;/span&gt;&lt;span class=&quot;badge&quot;&gt;${esc(t.category)}&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;card-main&quot;&gt;&lt;span class=&quot;badge&quot;&gt;#${String(TARGETS.indexOf(t)+1).padStart(2,&quot;0&quot;)}&lt;/span&gt;&lt;h3&gt;${esc(t.name)}&lt;/h3&gt;&lt;div class=&quot;two-col&quot;&gt;&lt;div class=&quot;info-box&quot;&gt;&lt;b&gt;Who they are&lt;/b&gt;&lt;p&gt;${esc(t.who)}&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;info-box&quot;&gt;&lt;b&gt;Why they align&lt;/b&gt;&lt;p&gt;${esc(t.why)}&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;info-box&quot;&gt;&lt;b&gt;Opportunity&lt;/b&gt;&lt;p&gt;${esc(t.opportunity)}&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;info-box&quot;&gt;&lt;b&gt;Next ask&lt;/b&gt;&lt;p&gt;${esc(t.nextAsk)}&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;two-col&quot;&gt;&lt;div class=&quot;info-box&quot;&gt;&lt;b&gt;Contact&lt;/b&gt;&lt;p&gt;${esc(t.contact)}&lt;/p&gt;&lt;/div&gt;&lt;div class=&quot;info-box&quot;&gt;&lt;b&gt;Address&lt;/b&gt;&lt;p&gt;${esc(t.address)}&lt;/p&gt;&lt;/div&gt;&lt;/div&gt;&lt;div class=&quot;links&quot;&gt;&lt;a class=&quot;link-pill&quot; href=&quot;${esc(t.website)}&quot; target=&quot;_blank&quot; rel=&quot;noopener&quot;&gt;↗ Open source / program page&lt;/a&gt;&lt;span class=&quot;link-pill&quot;&gt;Seed note: ${esc(t.notesSeed)}&lt;/span&gt;&lt;/div&gt;&lt;div class=&quot;call-row&quot;&gt;&lt;label&gt;&lt;span class=&quot;small-label&quot;&gt;Call/contact date&lt;/span&gt;&lt;input type=&quot;date&quot; data-field=&quot;date&quot; value=&quot;${esc(r.date||&quot;&quot;)}&quot;&gt;&lt;/label&gt;&lt;label&gt;&lt;span class=&quot;small-label&quot;&gt;Call notes / what they said&lt;/span&gt;&lt;textarea data-field=&quot;note&quot; placeholder=&quot;Write what they said, who you spoke with, next action, deadline, documents requested...&quot;&gt;${esc(r.note||&quot;&quot;)}&lt;/textarea&gt;&lt;/label&gt;&lt;/div&gt;&lt;/div&gt;&lt;/article&gt;`;}).join(&quot;&quot;);
- empty.style.display=filtered.length?&quot;none&quot;:&quot;block&quot;; updateStats();
-}
-pipeline.addEventListener(&quot;click&quot;,e=&gt;{const card=e.target.closest(&quot;.card&quot;); if(!card)return; if(e.target.closest('[data-action=&quot;toggle&quot;]')){const r=record(card.dataset.id); r.called=!r.called; if(r.called&amp;&amp;!r.date)r.date=new Date().toISOString().slice(0,10); save(); render();}});
-pipeline.addEventListener(&quot;input&quot;,e=&gt;{const card=e.target.closest(&quot;.card&quot;); if(!card)return; const field=e.target.dataset.field; if(!field)return; record(card.dataset.id)[field]=e.target.value; save(); updateStats();});
-[searchInput,categoryFilter,statusFilter,priorityFilter].forEach(el=&gt;el.addEventListener(&quot;input&quot;,render));
-document.getElementById(&quot;exportBtn&quot;).addEventListener(&quot;click&quot;,()=&gt;{const payload={exported_at:new Date().toISOString(),targets:TARGETS.map(t=&gt;({...t,outreach:record(t.id)}))}; const blob=new Blob([JSON.stringify(payload,null,2)],{type:&quot;application/json&quot;}); const url=URL.createObjectURL(blob); const a=document.createElement(&quot;a&quot;); a.href=url; a.download=&quot;nwkids-funding-outreach-notes.json&quot;; a.click(); URL.revokeObjectURL(url);});
-document.getElementById(&quot;printBtn&quot;).addEventListener(&quot;click&quot;,()=&gt;window.print());
-document.getElementById(&quot;resetBtn&quot;).addEventListener(&quot;click&quot;,()=&gt;{if(confirm(&quot;Reset called status, dates, and notes for every target?&quot;)){state={};save();render();}});
-renderCategories(); render();
-&lt;/script&gt;&lt;/body&gt;&lt;/html&gt;
-" title="NWKids Funding Alignment Call Tracker">
-</iframe>
-</div>
-</div>
-</section>
-<!-- ══════════════════════════════════════════════════════════
-     RESPONSE SECTION
-═══════════════════════════════════════════════════════════ -->
-<section class="response-section" data-chapter="" id="response-section">
-<div class="response-container">
-<div class="section-tag" style="color:var(--gold);">Your Voice</div>
-<h2>Your Response</h2>
-<div class="response-meta">
-<span>Your input is private and saved locally</span>
-<span class="response-date" id="response-date"></span>
-</div>
-<div class="form-group">
-<label for="response-text">Your Thoughts</label>
-<textarea id="response-text" placeholder="Share your perspective. What resonates? What questions remain? What would help clarify the path forward?"></textarea>
-<span class="char-count" id="char-count">0 characters</span>
-</div>
-<div class="button-group">
-<button class="btn btn-primary" id="response-save-btn">Save Response</button>
-</div>
-<div class="response-saved-msg" id="response-saved-msg">Response saved successfully</div>
-<div class="response-history" id="response-history" style="display:none;">
-<h4>Previous Responses</h4>
-<div class="response-history-list" id="response-history-list"></div>
-</div>
-</div>
-</section>
-<!-- ══════════════════════════════════════════════════════════
-     FOOTER
-═══════════════════════════════════════════════════════════ -->
-<footer>
-<p>New World Kids — Interactive Document | Private &amp; Confidential</p>
-</footer>
-<!-- ══════════════════════════════════════════════════════════
-     TOAST NOTIFICATION
-═══════════════════════════════════════════════════════════ -->
-<div id="toast"></div>
-<!-- ══════════════════════════════════════════════════════════
-     JAVASCRIPT
-═══════════════════════════════════════════════════════════ -->
-<script>
-(function(){
-
-/* ══ STATE MANAGEMENT ═══════════════════════════════════════ */
-var state = {
-  activeChapter: 'hero',
-  visited: {},
-  qaAnswers: {},
-  response: {
-    name: '',
-    text: '',
-    history: []
-  }
-};
-
-var CHAPTERS = [
-  { id: 'hero', label: 'Introduction', tag: null },
-  { id: 'qa-section', label: 'Q & A', tag: 'Part One' },
-  { id: 'chapter-7', label: 'Recent Projects & Proposals', tag: 'Section 7' },
-  { id: 'chapter-8', label: 'Funding Alignment Board', tag: 'Section 8' },
-  { id: 'response-section', label: 'Your Response', tag: 'Your Voice' }
-];
-
-/* ══ STORAGE ═══════════════════════════════════════════════ */
-function saveState(){
-  localStorage.setItem('veronika-state', JSON.stringify(state));
-}
-
-function loadState(){
-  var saved = localStorage.getItem('veronika-state');
-  if(saved){
-    try{
-      state = JSON.parse(saved);
-    }catch(e){
-      console.log('State load failed');
-    }
-  }
-}
-
-/* ══ QA HANDLERS — answers are now hardcoded static text ═══ */
-
-/* ══ SAVE QUEUEING ═════════════════════════════════════════ */
-var saveTimeout;
-function queueSave(){
-  clearTimeout(saveTimeout);
-  saveTimeout = setTimeout(function(){
-    saveState();
-  }, 1500);
-}
-
-/* ══ TOAST ═════════════════════════════════════════════════ */
-function toast(msg){
-  var el = document.getElementById('toast');
-  el.textContent = msg; 
-  el.classList.add('show');
-  setTimeout(function(){ el.classList.remove('show'); }, 2400);
-}
-
-/* ══ TABLE OF CONTENTS ══════════════════════════════════════ */
-function buildTOC(){
-  var list = document.getElementById('toc-list');
-  if(!list) return;
-  list.innerHTML = CHAPTERS.map(function(ch, i){
-    var isHero = ch.id === 'hero';
-    var isResp = ch.id === 'response-section';
-    var label  = isHero ? '✦' : (isResp ? '✉' : String(i));
-    return '<li class="toc-item">' +
-      '<a class="toc-link" href="#' + ch.id + '" data-toc-id="' + ch.id + '" onclick="closeTOC()">' +
-        '<span class="toc-num">' + label + '</span>' +
-        '<span class="toc-title">' +
-          (ch.tag ? '<span class="toc-chapter-label">' + ch.tag + '</span>' : '') +
-          ch.label +
-        '</span>' +
-      '</a></li>';
-  }).join('');
-}
-
-function updateTOCActive(activeId){
-  document.querySelectorAll('.toc-link').forEach(function(link){
-    var id = link.dataset.tocId;
-    link.classList.toggle('active', id === activeId);
-    if(state.visited[id]) link.classList.add('visited');
-  });
-}
-
-function openTOC(){ document.getElementById('toc-overlay').classList.add('open'); }
-function closeTOC(){ document.getElementById('toc-overlay').classList.remove('open'); }
-window.closeTOC = closeTOC;
-
-document.getElementById('toc-open-btn').addEventListener('click', openTOC);
-document.getElementById('toc-close-btn').addEventListener('click', closeTOC);
-document.getElementById('toc-overlay').addEventListener('click', function(e){
-  if(e.target === this) closeTOC();
-});
-
-/* ══ TOPNAV SCROLL ════════════════════════════════════════ */
-window.addEventListener('scroll', function(){
-  var nav = document.getElementById('topnav');
-  nav.classList.toggle('scrolled', window.scrollY > 80);
-
-  var doc  = document.documentElement;
-  var bar  = document.getElementById('progress-bar');
-  var pct  = (window.scrollY / (doc.scrollHeight - doc.clientHeight)) * 100;
-  bar.style.width = Math.min(pct, 100) + '%';
-}, {passive:true});
-
-/* ══ INTERSECTION OBSERVER ══════════════════════════════════ */
-var chapterObserver = new IntersectionObserver(function(entries){
-  entries.forEach(function(entry){
-    if(!entry.isIntersecting) return;
-    var id = entry.target.id;
-    state.activeChapter = id;
-    state.visited[id]   = true;
-    updateTOCActive(id);
-    queueSave();
-  });
-}, { threshold:0.3 });
-
-function initObservers(){
-  document.querySelectorAll('[data-chapter]').forEach(function(el){
-    chapterObserver.observe(el);
-  });
-}
-
-/* ══ RESPONSE SECTION ═══════════════════════════════════════ */
-function initResponse(){
-  var textField  = document.getElementById('response-text');
-  var saveBtn    = document.getElementById('response-save-btn');
-  var savedMsg   = document.getElementById('response-saved-msg');
-  var charCount  = document.getElementById('char-count');
-  var dateEl     = document.getElementById('response-date');
-
-  if(dateEl) dateEl.textContent = new Date().toLocaleDateString('en-US',{weekday:'short',year:'numeric',month:'short',day:'numeric'});
-
-  renderResponse();
-
-  if(textField){
-    textField.value = state.response.text || '';
-    textField.addEventListener('input', function(){
-      state.response.text = this.value;
-      if(charCount) charCount.textContent = this.value.length.toLocaleString() + ' characters';
-      queueSave();
-    });
-    if(charCount) charCount.textContent = (textField.value.length).toLocaleString() + ' characters';
-  }
-
-  if(saveBtn){
-    saveBtn.addEventListener('click', function(){
-      var text = textField ? textField.value.trim() : '';
-      if(!text){ toast('Please write something.'); return; }
-
-      state.response.history.unshift({
-        text: text,
-        timestamp: new Date().toISOString()
-      });
-      if(state.response.history.length > 10) state.response.history.pop();
-
-      state.response.text = text;
-      saveState();
-      renderResponseHistory();
-
-      if(savedMsg){ savedMsg.classList.add('show'); setTimeout(function(){ savedMsg.classList.remove('show'); }, 3000); }
-      toast('Response saved ✓');
-    });
-  }
-}
-
-function renderResponse(){
-  var textField = document.getElementById('response-text');
-  if(textField && state.response.text) textField.value = state.response.text;
-  renderResponseHistory();
-}
-
-function renderResponseHistory(){
-  var hist    = state.response.history || [];
-  var wrap    = document.getElementById('response-history');
-  var listEl  = document.getElementById('response-history-list');
-  if(!wrap || !listEl) return;
-  if(!hist.length){ wrap.style.display='none'; return; }
-  wrap.style.display = 'block';
-  listEl.innerHTML = hist.slice(0,5).map(function(h){
-    var d  = new Date(h.timestamp);
-    var dt = d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) + ' · ' + d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
-    return '<div class="response-entry">' +
-      '<div class="response-entry-meta">' + (h.name||'Response') + ' · ' + dt + '</div>' +
-      '<div class="response-entry-text">' + h.text.slice(0,200) + (h.text.length>200?'…':'') + '</div>' +
-    '</div>';
-  }).join('');
-}
-
-
-/* ══ RECENT PROJECT CARDS ═══════════════════════════════════ */
-function initProjectCards(){
-  if(!state.projects) state.projects = {};
-
-  document.querySelectorAll('[data-project-card]').forEach(function(card){
-    var id          = card.getAttribute('data-project-card');
-    var titleEl     = card.querySelector('[data-project-field="title"]');
-    var descEl      = card.querySelector('[data-project-field="description"]');
-    var urlInput    = card.querySelector('[data-project-input="url"]');
-    var imageInput  = card.querySelector('[data-project-input="image"]');
-    var snapshot    = card.querySelector('[data-project-snapshot]');
-    var link        = card.querySelector('[data-project-link]');
-    var coverLink   = card.querySelector('[data-project-cover-link]');
-    var urlPreview  = card.querySelector('[data-project-url-preview]');
-    var saved       = state.projects[id] || {};
-    var lockedImage = snapshot && snapshot.getAttribute('data-locked-image') === 'true';
-
-    if(saved.title && titleEl) titleEl.textContent = saved.title;
-    if(saved.description && descEl) descEl.textContent = saved.description;
-    if(saved.url && urlInput) urlInput.value = saved.url;
-    if(saved.image && imageInput && !lockedImage) imageInput.value = saved.image;
-    if(id === 'project-3-living-documents' && imageInput && (!imageInput.value || imageInput.value === 'living-documents-cover-recreated.png')) imageInput.value = 'asc3nd-living-document-hero.png';
-
-    function normalizeUrl(url){
-      if(!url) return '';
-      if(/^https?:\/\//i.test(url) || url.indexOf('#') === 0 || /\.html(#[^\s]*)?$/i.test(url) || /^data:/i.test(url)) return url;
-      return 'https://' + url;
-    }
-
-    function getHostLabel(url){
-      if(!url) return 'Add website URL';
-      try{
-        return new URL(normalizeUrl(url)).hostname.replace(/^www\./,'');
-      }catch(e){
-        return 'Open Website';
-      }
-    }
-
-    function applyProjectState(){
-      var url   = urlInput ? urlInput.value.trim() : '';
-      var image = lockedImage ? '' : (imageInput ? imageInput.value.trim() : '');
-      var cleanUrl = normalizeUrl(url);
-
-      if(link){
-        if(cleanUrl){
-          link.href = cleanUrl;
-          link.textContent = getHostLabel(cleanUrl);
-          link.style.pointerEvents = 'auto';
-        }else{
-          link.href = '#';
-          link.textContent = 'Add website URL';
-          link.style.pointerEvents = 'none';
-        }
-      }
-
-      if(coverLink){
-        if(cleanUrl){
-          coverLink.href = cleanUrl;
-          coverLink.style.pointerEvents = 'auto';
-        }else{
-          coverLink.href = '#';
-          coverLink.style.pointerEvents = 'none';
-        }
-      }
-
-      if(urlPreview){
-        urlPreview.textContent = cleanUrl || 'Hero snapshot URL pending';
-      }
-
-      if(snapshot){
-        if(lockedImage){
-          snapshot.classList.add('has-image');
-          return;
-        }
-        var frame = snapshot.querySelector('iframe');
-        var staticPreview = snapshot.querySelector('.living-doc-snapshot-card');
-        if(image){
-          snapshot.style.backgroundImage = 'linear-gradient(rgba(21,20,16,0.04),rgba(21,20,16,0.16)), url("' + image.replace(/"/g,'&quot;') + '")';
-          snapshot.classList.add('has-image');
-          if(frame) frame.style.display = 'none';
-          if(staticPreview) staticPreview.style.display = 'none';
-        }else{
-          snapshot.style.backgroundImage = '';
-          snapshot.classList.remove('has-image');
-          if(frame) frame.style.display = '';
-          if(staticPreview) staticPreview.style.display = '';
-        }
-      }
-    }
-
-    function persistProjectState(){
-      state.projects[id] = {
-        title: titleEl ? titleEl.textContent.trim() : '',
-        description: descEl ? descEl.textContent.trim() : '',
-        url: urlInput ? urlInput.value.trim() : '',
-        image: imageInput ? imageInput.value.trim() : ''
-      };
-      applyProjectState();
-      queueSave();
-    }
-
-    [titleEl, descEl].forEach(function(el){
-      if(el) el.addEventListener('input', persistProjectState);
-    });
-    [urlInput, imageInput].forEach(function(el){
-      if(el) el.addEventListener('input', persistProjectState);
-    });
-
-    applyProjectState();
-  });
-}
-
-/* ══ INIT ═══════════════════════════════════════════════════ */
-loadState();
-buildTOC();
-updateTOCActive(state.activeChapter || 'hero');
-initObservers();
-initProjectCards();
-initResponse();
-
-})();
-</script>
-
