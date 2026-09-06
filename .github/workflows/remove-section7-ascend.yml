@@ -9,12 +9,18 @@ permissions:
 
 jobs:
   cleanup:
-    if: github.event.head_commit.message != 'chore: finalize Veronika cleanup'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      - name: Stop after cleanup commit
+        run: |
+          if [ "$(git log -1 --pretty=%s)" = "chore: finalize Veronika cleanup" ]; then
+            echo "Cleanup already finalized"
+            exit 0
+          fi
 
       - name: Remove section 7 and ASC3ND assets
         shell: python
@@ -22,51 +28,44 @@ jobs:
           from pathlib import Path
           import re
 
-          index = Path('index.html')
-          s = index.read_text(encoding='utf-8')
+          index = Path("index.html")
+          s = index.read_text(encoding="utf-8")
 
-          # Remove the entire rendered Section 7 block by its chapter id.
-          m = re.search(r'<section\b[^>]*\bid=["\']chapter-7["\'][^>]*>', s, flags=re.I)
+          m = re.search(r"<section\b[^>]*\bid=['\"]chapter-7['\"][^>]*>", s, flags=re.I)
           if m:
-              end = s.find('</section>', m.end())
+              end = s.find("</section>", m.end())
               if end == -1:
-                  raise SystemExit('Found chapter-7 start but not closing </section>')
-              end += len('</section>')
-              s = s[:m.start()] + '\n<!-- Section 7 removed -->\n' + s[end:]
+                  raise SystemExit("Found chapter-7 start but not closing section")
+              end += len("</section>")
+              s = s[:m.start()] + "\n<!-- Section 7 removed -->\n" + s[end:]
 
-          # Remove navigation and direct styling references to chapter-7.
-          s = re.sub(r'<li[^>]*>\s*<a[^>]*href=["\']#chapter-7["\'][\s\S]*?</a>\s*</li>', '', s, flags=re.I)
-          s = re.sub(r'<a[^>]*href=["\']#chapter-7["\'][\s\S]*?</a>', '', s, flags=re.I)
-          s = re.sub(r'\s*#chapter-7\s*\{[^}]*\}', '', s, flags=re.I)
+          s = re.sub(r"<li[^>]*>\s*<a[^>]*href=['\"]#chapter-7['\"][\s\S]*?</a>\s*</li>", "", s, flags=re.I)
+          s = re.sub(r"<a[^>]*href=['\"]#chapter-7['\"][\s\S]*?</a>", "", s, flags=re.I)
+          s = re.sub(r"\s*#chapter-7\s*\{[^}]*\}", "", s, flags=re.I)
+          index.write_text(s, encoding="utf-8")
 
-          index.write_text(s, encoding='utf-8')
-
-          # Remove standalone ASC3ND 90-Day Social Presence Builder.
-          asc = Path('asc3nd-90-day-social-presence-builder-updated.html')
+          asc = Path("asc3nd-90-day-social-presence-builder-updated.html")
           if asc.exists():
               asc.unlink()
 
-          # Remove its Vercel route.
-          v = Path('vercel.json')
+          v = Path("vercel.json")
           if v.exists():
-              txt = v.read_text(encoding='utf-8')
-              txt = re.sub(r'\s*\{\s*"source"\s*:\s*"/social-presence-builder"\s*,\s*"destination"\s*:\s*"/asc3nd-90-day-social-presence-builder-updated\.html"\s*\}\s*,?', '', txt)
-              txt = txt.replace('{ "source": "/", "destination": "/index.html" }\n    {', '{ "source": "/", "destination": "/index.html" },\n    {')
-              v.write_text(txt, encoding='utf-8')
+              txt = v.read_text(encoding="utf-8")
+              txt = re.sub(r"\s*\{\s*\"source\"\s*:\s*\"/social-presence-builder\"\s*,\s*\"destination\"\s*:\s*\"/asc3nd-90-day-social-presence-builder-updated\.html\"\s*\}\s*,?", "", txt)
+              txt = txt.replace("{ \"source\": \"/\", \"destination\": \"/index.html\" }\n    {", "{ \"source\": \"/\", \"destination\": \"/index.html\" },\n    {")
+              v.write_text(txt, encoding="utf-8")
 
-          # Remove stale README references to ASC3ND and recent-project screenshots.
-          r = Path('README.txt')
+          r = Path("README.txt")
           if r.exists():
-              lines = r.read_text(encoding='utf-8').splitlines()
-              lines = [line for line in lines if 'ASC3ND' not in line and 'Jetty screenshot' not in line and 'Indigo Azul concept images' not in line]
-              r.write_text('\n'.join(lines).rstrip() + '\n', encoding='utf-8')
+              lines = r.read_text(encoding="utf-8").splitlines()
+              lines = [line for line in lines if "ASC3ND" not in line and "Jetty screenshot" not in line and "Indigo Azul concept images" not in line]
+              r.write_text("\n".join(lines).rstrip() + "\n", encoding="utf-8")
 
-          # Safety checks.
-          final = index.read_text(encoding='utf-8')
-          if re.search(r'id=["\']chapter-7["\']', final, flags=re.I):
-              raise SystemExit('chapter-7 still present')
-          if 'ASC3ND COLLECTIVE' in final or '90-Day Social Presence Builder' in final:
-              raise SystemExit('ASC3ND content still present in index')
+          final = index.read_text(encoding="utf-8")
+          if re.search(r"id=['\"]chapter-7['\"]", final, flags=re.I):
+              raise SystemExit("chapter-7 still present")
+          if "ASC3ND COLLECTIVE" in final or "90-Day Social Presence Builder" in final:
+              raise SystemExit("ASC3ND content still present in index")
 
       - name: Commit cleanup
         run: |
