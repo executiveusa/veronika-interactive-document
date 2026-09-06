@@ -34,3 +34,5 @@ jobs:
           fi
           git commit -m "chore: finalize reduced Veronika version"
           git push origin main
+
+# bounded one-shot rerun
