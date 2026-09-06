@@ -1,0 +1,151 @@
+name: Reduce Veronika document
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Remove approved text and dead project code
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('index.html')
+          s = p.read_text()
+
+          def cut_exact(text, required=True):
+              global s
+              count = s.count(text)
+              if required and count == 0:
+                  raise SystemExit(f'Missing expected text: {text[:120]}')
+              s = s.replace(text, '')
+              return count
+
+          # Visible copy reductions — deletion only.
+          cut_exact(" or feeling like somebody's robot")
+          cut_exact(" I listed in the resources section at the end of this document")
+          cut_exact("Personal answer. I'm 47 now and 48 this year. ")
+          cut_exact("My time is all I have and I don't feel aligned with spending it using my skills to help build and grow a corporation whose primary goal is maximizing profits at any cost and views most of their employees as expendable and replaceable. ")
+          cut_exact("That fact is part of the reason I decided to do this project in the first place and not deal with being in the rat race or pursuing a traditional path. ")
+          for sentence in [
+              "On a positive note yesterday I met with my first potential client to see if I could get signal or if all of this is just noise. ",
+              "They seemed very interested, really liked the preview and will let me know how they want to proceed. ",
+              "They are a new non profit as well. ",
+              "The biggest takeaway from that meeting was how I felt when I hung up the phone. ",
+              "I was genuinely happy. ",
+              "I really felt good having a skill that can help people, being able to answer questions honestly and not just trying to persuade someone to “buy my thing.” ",
+              "I felt inspired by what they were doing and it was something I can see myself doing. ",
+              "I'll update you when I have a response. "
+          ]:
+              cut_exact(sentence)
+
+          cut_exact("Everything here can be extracted and moved — trees are in buried containers, most structures are built like movie props, and furniture and domes pack flat. ")
+          cut_exact("It moves like a circus or a Super Bowl halftime show. ")
+          cut_exact("Governments and political people always want a quick win, and with the proper alignment, many things become possible. ")
+          cut_exact("The sky is the limit, but ")
+          cut_exact(" and other clients in the future")
+          cut_exact(" / Pauli")
+          cut_exact("Pauli/", required=False)
+          cut_exact(" and Pauli’s nonprofit capacity-building model", required=False)
+
+          # Remove stale Section 7 TOC entry.
+          s = re.sub(r"\n\s*\{ id: 'chapter-7', label: 'Recent Projects & Proposals', tag: 'Section 7' \},", "", s, count=1)
+
+          # Remove the main Recent Projects & Proposals CSS block.
+          s, n_css = re.subn(
+              r"\n/\* ═+\n   RECENT PROJECTS & PROPOSALS\n═+ \*/.*?(?=/\* ═+\n   RESPONSE SECTION)",
+              "\n",
+              s,
+              count=1,
+              flags=re.S,
+          )
+          if n_css != 1:
+              raise SystemExit(f'Expected one recent-project CSS block, removed {n_css}')
+
+          # Remove leftover project-specific CSS between the funding tracker CSS and funding-collapsible block.
+          s = re.sub(
+              r"\n\.project-snapshot\.jetty-static\{.*?(?=\n\.funding-collapsible\{)",
+              "\n",
+              s,
+              count=1,
+              flags=re.S,
+          )
+
+          # Remove project-specific hero isolation selectors only; keep hero isolation itself.
+          s = re.sub(r"\n\.hero \.project-snapshot,\n\.hero \.project-snapshot-link,\n\.hero \[data-project-card\]\{\n  display:none!important;\n\}", "", s, count=1)
+          s = s.replace('\n.project-card[data-project-card="project-4-jetty"] ', '\n')
+
+          # Remove the project-card JavaScript function and its init call.
+          s, n_js = re.subn(
+              r"\n/\* ══ RECENT PROJECT CARDS ═+ \*/\nfunction initProjectCards\(\)\{.*?\n\}\n\n(?=/\* ══ INIT)",
+              "\n",
+              s,
+              count=1,
+              flags=re.S,
+          )
+          if n_js != 1:
+              raise SystemExit(f'Expected one project-card JS block, removed {n_js}')
+          s = s.replace('\ninitProjectCards();', '')
+
+          # Remove startup/investor-only targets from the embedded funding tracker.
+          for target_id in ['ai-house-ai2-incubator-ecosystem', 'cascadia-capital-robotics-automation-ai-network']:
+              pat = r",? \{&quot;priority&quot;:.*?&quot;id&quot;: &quot;" + re.escape(target_id) + r"&quot;\}"
+              s, n = re.subn(pat, '', s, count=1, flags=re.S)
+              if n != 1:
+                  raise SystemExit(f'Expected one funding target {target_id}, removed {n}')
+
+          # Cleanup accidental spacing from sentence deletions only.
+          s = s.replace('Short answer: yes, of course. There is no shortage of companies that want to hire people that can use AI to help them scale.<br/><br/>\n      </div>',
+                        'Short answer: yes, of course. There is no shortage of companies that want to hire people that can use AI to help them scale.</div>')
+
+          p.write_text(s)
+          PY
+
+      - name: Verify reductions
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          s = Path('index.html').read_text()
+          forbidden = [
+            "chapter-7', label: 'Recent Projects & Proposals",
+            "resources section at the end of this document",
+            "I'm 47 now and 48 this year",
+            "maximizing profits at any cost",
+            "yesterday I met with my first potential client",
+            "Governments and political people always want a quick win",
+            "The sky is the limit",
+            "NWKids / Pauli Funding Tracker",
+            "Pauli/NWKids",
+            "ai-house-ai2-incubator-ecosystem",
+            "cascadia-capital-robotics-automation-ai-network",
+            "function initProjectCards()",
+            "RECENT PROJECTS & PROPOSALS"
+          ]
+          left = [x for x in forbidden if x in s]
+          if left:
+              raise SystemExit('Still present: ' + repr(left))
+          PY
+
+      - name: Commit cleanup and remove temporary workflow
+        shell: bash
+        run: |
+          rm .github/workflows/reduce-veronika-document.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html .github/workflows/reduce-veronika-document.yml
+          git commit -m "chore: reduce Veronika document to current material"
+          git push origin HEAD:main
