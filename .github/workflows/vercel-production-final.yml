@@ -1,0 +1,28 @@
+name: Vercel production final
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/vercel-production-final.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: team_2MkWeFBaSCv7DOvEy0OlX4s3
+      VERCEL_PROJECT_ID: prj_hXkcwgqCUlrs2OCj2Dsyg95tslbI
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Deploy latest main to production
+        run: |
+          if [ -z "${{ secrets.VERCEL_TOKEN }}" ]; then
+            echo "VERCEL_TOKEN secret is not configured"
+            exit 2
+          fi
+          npx vercel@latest pull --yes --environment=production --token="${{ secrets.VERCEL_TOKEN }}"
+          npx vercel@latest build --prod --token="${{ secrets.VERCEL_TOKEN }}"
+          npx vercel@latest deploy --prebuilt --prod --token="${{ secrets.VERCEL_TOKEN }}"
