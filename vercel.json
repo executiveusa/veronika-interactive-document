@@ -1,13 +1,7 @@
 {
   "cleanUrls": true,
   "rewrites": [
-    {
-      "source": "/",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/funding-alignment",
-      "destination": "/nwkids_funding_alignment_call_tracker_v2.html"
-    }
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/funding-alignment", "destination": "/nwkids_funding_alignment_call_tracker_v2.html" }
   ]
 }
