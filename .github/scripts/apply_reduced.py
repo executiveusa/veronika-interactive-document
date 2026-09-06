@@ -15,7 +15,6 @@ replacements = [
     ("<div class=\"qa-question\">Hiring Context: Why did you hire me two years ago if the primary focus at that stage was just 'letting the garden mature'?</div>", '<div class="qa-question">One question that keeps coming up for me is this: why did you hire me two years ago to help if the primary focus at that stage was allowing the garden to mature?</div>'),
     ('<div class="qa-question">Transparency Gap: Why is the progression currently unclear to an observer?</div>', '<div class="qa-question">I think the bigger question right now is why the progression isn\'t clearer. Usually, when someone feels deeply connected to a mission, they\'re naturally thinking about how it grows and evolves over time. Since I\'m not hearing that level of specificity, I\'m wondering why. Is it something you haven\'t thought through yet? Does planning feel overwhelming? Or is there something else?</div>'),
     ('<div class="qa-question">Milestone Planning: What are your specific, concrete goals for 1, 3, and 5 years from now that bridge the gap from where you are today to your long-term vision?</div>', '<div class="qa-question">What are your goals 1 year from now? 3 years from now? Five years from now?</div>'),
-    ('<meta name=&quot;description&quot; content=&quot;Interactive grant and partnership outreach checklist for NWKids and .&quot;&gt;', '<meta name=&quot;description&quot; content=&quot;Interactive grant and partnership outreach checklist for NWKids.&quot;&gt;'),
     ('Notes and status are saved locally in their browser.', 'Notes and status are saved locally in your browser.'),
     ('Click to open the full outreach board when she is ready to review or make calls.', 'Click to open the full outreach board when you are ready to review or make calls.'),
     ('<div class="section-tag" style="color:var(--gold);">Section 8</div>\n', ''),
@@ -25,6 +24,8 @@ for old, new in replacements:
     if old not in s:
         raise SystemExit(f'Missing expected text: {old[:120]}')
     s = s.replace(old, new)
+
+s = s.replace('NWKids and .', 'NWKids.')
 
 old_scaling = """<div class=\"qa-question\">Scaling Vision: What does 'taking this model elsewhere' look like in practice?</div><p>Take what worked in Puerto Vallarta, bring it back to Seattle, test it with youth in the community, and prove the model before trying to scale further.</p>
 <div class=\"qa-answer\"></div>"""
